@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Fluvio Contract Test</title>
+    <style>
+        body { font-family: monospace; padding: 20px; }
+        button { margin: 10px; padding: 10px; }
+        pre { background: #f0f0f0; padding: 10px; }
+    </style>
+</head>
+<body>
+    <h1>Fluvio Contract Test</h1>
+    <button id="connect">Connect Keplr</button>
+    <button id="createStream" disabled>Create Stream (0.1 INIT for 1 min to self)</button>
+    <pre id="output"></pre>
+
+    <script>
+        let keplr, offlineSigner, address;
+
+        document.getElementById('connect').onclick = async () => {
+            if (!window.keplr) {
+                document.getElementById('output').innerText = 'Keplr not installed';
+                return;
+            }
+            await window.keplr.experimentalSuggestChain({
+                chainId: 'initiation-2',
+                chainName: 'Initia Testnet',
+                rpc: 'https://rpc.testnet.initia.xyz',
+                rest: 'https://rest.testnet.initia.xyz',
+                bip44: { coinType: 118 },
+                bech32Config: {
+                    bech32PrefixAccAddr: 'init',
+                    bech32PrefixAccPub: 'initpub',
+                },
+                currencies: [{ coinDenom: 'INIT', coinMinimalDenom: 'uinit', coinDecimals: 6 }],
+                feeCurrencies: [{ coinDenom: 'INIT', coinMinimalDenom: 'uinit', coinDecimals: 6 }],
+                stakeCurrency: { coinDenom: 'INIT', coinMinimalDenom: 'uinit', coinDecimals: 6 },
+            });
+            await window.keplr.enable('initiation-2');
+            offlineSigner = window.keplr.getOfflineSigner('initiation-2');
+            const accounts = await offlineSigner.getAccounts();
+            address = accounts[0].address;
+            document.getElementById('output').innerText = 'Connected: ' + address;
+            document.getElementById('createStream').disabled = false;
+        };
+
+        document.getElementById('createStream').onclick = async () => {
+            if (!offlineSigner) return;
+            const { SigningStargateClient } = await import('https://esm.sh/@cosmjs/stargate');
+            const { Registry } = await import('https://esm.sh/@cosmjs/proto-signing');
+            const { MsgExecute } = await import('https://esm.sh/@initia/initia.js');
+
+            const registry = new Registry();
+            registry.register('/initia.move.v1.MsgExecute', MsgExecute);
+
+            const client = await SigningStargateClient.connectWithSigner(
+                'https://rpc.testnet.initia.xyz',
+                offlineSigner,
+                { registry }
+            );
+
+            const contractAddr = 'init17g5nnyjfkhnjg4w2m82m9st6lxdhuw62zjgsmd';
+            const recipient = address; // stream to self
+            const amountUinit = 100000; // 0.1 INIT
+            const durationMs = 60000; // 1 minute
+
+            const toBase64 = (str) => btoa(unescape(encodeURIComponent(str)));
+
+            const msgValue = new MsgExecute({
+                sender: address,
+                module_address: contractAddr,
+                module_name: 'stream_core',
+                function_name: 'create_stream',
+                type_args: [],
+                args: [
+                    toBase64(recipient),
+                    toBase64(amountUinit.toString()),
+                    toBase64(durationMs.toString()),
+                ],
+            });
+
+            const msg = {
+                typeUrl: '/initia.move.v1.MsgExecute',
+                value: msgValue,
+            };
+
+            const fee = {
+                amount: [{ denom: 'uinit', amount: '50000' }],
+                gas: '500000',
+            };
+
+            try {
+                const result = await client.signAndBroadcast(address, [msg], fee);
+                document.getElementById('output').innerText = 'TX hash: ' + result.transactionHash;
+            } catch (err) {
+                document.getElementById('output').innerText = 'Error: ' + err.message;
+            }
+        };
+    </script>
+    <script type="importmap">
+        {
+            "imports": {
+                "@cosmjs/stargate": "https://esm.sh/@cosmjs/stargate",
+                "@cosmjs/proto-signing": "https://esm.sh/@cosmjs/proto-signing",
+                "@initia/initia.js": "https://esm.sh/@initia/initia.js"
+            }
+        }
+    </script>
+</body>
+</html>

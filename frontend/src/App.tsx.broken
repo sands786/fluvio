@@ -1,0 +1,692 @@
+import React, { useState, useEffect, useCallback } from 'react'
+import { useWallet } from './useWallet'
+import { useContract } from './useContract'
+import './App.css'
+
+// ─── Types ─────────────────────────────────────────────────────────────────
+
+interface Stream {
+  id: number
+  sender: string
+  recipient: string
+  senderUsername: string
+  recipientUsername: string
+  totalDeposited: number     // in INIT (6 decimals, display as float)
+  ratePerMs: number          // INIT per millisecond
+  withdrawn: number
+  startTimeMs: number
+  endTimeMs: number
+  streamType: 'salary' | 'subscription' | 'rental' | 'grant' | 'custom'
+  note: string
+  active: boolean
+  cancelled: boolean
+}
+
+// ─── Mock data for demo ────────────────────────────────────────────────────
+
+const DEMO_START = Date.now() - 3 * 24 * 60 * 60 * 1000 // started 3 days ago
+const DEMO_END = Date.now() + 11 * 24 * 60 * 60 * 1000  // ends in 11 days
+
+const MOCK_STREAMS: Stream[] = [
+  {
+    id: 1,
+    sender: '0xabc...123',
+    recipient: '0xdef...456',
+    senderUsername: 'initia-labs.init',
+    recipientUsername: 'shahmeer.init',
+    totalDeposited: 1400,
+    ratePerMs: 1400 / (14 * 24 * 60 * 60 * 1000),
+    withdrawn: 0,
+    startTimeMs: DEMO_START,
+    endTimeMs: DEMO_END,
+    streamType: 'salary',
+    note: 'Monthly Developer Grant',
+    active: true,
+    cancelled: false,
+  },
+  {
+    id: 2,
+    sender: '0xghi...789',
+    recipient: '0xdef...456',
+    senderUsername: 'drip.init',
+    recipientUsername: 'shahmeer.init',
+    totalDeposited: 500,
+    ratePerMs: 500 / (30 * 24 * 60 * 60 * 1000),
+    withdrawn: 0,
+    startTimeMs: Date.now() - 5 * 24 * 60 * 60 * 1000,
+    endTimeMs: Date.now() + 25 * 24 * 60 * 60 * 1000,
+    streamType: 'subscription',
+    note: 'Protocol Revenue Share',
+    active: true,
+    cancelled: false,
+  },
+]
+
+const MOCK_OUTGOING: Stream[] = [
+  {
+    id: 3,
+    sender: '0xdef...456',
+    recipient: '0xjkl...012',
+    senderUsername: 'shahmeer.init',
+    recipientUsername: 'alice.init',
+    totalDeposited: 300,
+    ratePerMs: 300 / (30 * 24 * 60 * 60 * 1000),
+    withdrawn: 0,
+    startTimeMs: Date.now() - 2 * 24 * 60 * 60 * 1000,
+    endTimeMs: Date.now() + 28 * 24 * 60 * 60 * 1000,
+    streamType: 'rental',
+    note: 'Server Rental',
+    active: true,
+    cancelled: false,
+  },
+]
+
+// ─── Utils ─────────────────────────────────────────────────────────────────
+
+function calcClaimable(stream: Stream): number {
+  const now = Date.now()
+  const effectiveEnd = Math.min(now, stream.endTimeMs)
+  const elapsed = effectiveEnd - stream.startTimeMs
+  const earned = elapsed * stream.ratePerMs
+  const capped = Math.min(earned, stream.totalDeposited)
+  return Math.max(0, capped - stream.withdrawn)
+}
+
+function calcProgress(stream: Stream): number {
+  const now = Date.now()
+  const total = stream.endTimeMs - stream.startTimeMs
+  const elapsed = Math.min(now, stream.endTimeMs) - stream.startTimeMs
+  return Math.min(100, (elapsed / total) * 100)
+}
+
+function formatINIT(amount: number): string {
+  if (amount >= 1000) return amount.toFixed(2)
+  if (amount >= 1) return amount.toFixed(4)
+  return amount.toFixed(6)
+}
+
+function formatRate(ratePerMs: number): string {
+  const perSec = ratePerMs * 1000
+  if (perSec >= 1) return `${perSec.toFixed(4)} INIT/s`
+  const perMin = perSec * 60
+  if (perMin >= 1) return `${perMin.toFixed(3)} INIT/min`
+  const perHour = perMin * 60
+  return `${perHour.toFixed(2)} INIT/hr`
+}
+
+function timeRemaining(endMs: number): string {
+  const diff = endMs - Date.now()
+  if (diff <= 0) return 'Completed'
+  const days = Math.floor(diff / 86400000)
+  const hrs = Math.floor((diff % 86400000) / 3600000)
+  const mins = Math.floor((diff % 3600000) / 60000)
+  if (days > 0) return `${days}d ${hrs}h remaining`
+  if (hrs > 0) return `${hrs}h ${mins}m remaining`
+  return `${mins}m remaining`
+}
+
+const STREAM_TYPE_LABELS: Record<string, string> = {
+  salary: 'Salary',
+  subscription: 'Subscription',
+  rental: 'Rental',
+  grant: 'Grant',
+  custom: 'Custom',
+}
+
+const STREAM_TYPE_COLORS: Record<string, string> = {
+  salary: '#00c896',
+  subscription: '#7c6ff7',
+  rental: '#f59e0b',
+  grant: '#3b82f6',
+  custom: '#94a3b8',
+}
+
+// ─── Components ────────────────────────────────────────────────────────────
+
+function LiveCounter({ stream }: { stream: Stream }) {
+  const [claimable, setClaimable] = useState(calcClaimable(stream))
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setClaimable(calcClaimable(stream))
+    }, 100) // 100ms — matches Initia block time
+    return () => clearInterval(interval)
+  }, [stream])
+
+  return (
+    <span className="live-counter">
+      {formatINIT(claimable)}
+    </span>
+  )
+}
+
+function ProgressBar({ stream }: { stream: Stream }) {
+  const [progress, setProgress] = useState(calcProgress(stream))
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setProgress(calcProgress(stream))
+    }, 500)
+    return () => clearInterval(interval)
+  }, [stream])
+
+  return (
+    <div className="progress-wrap">
+      <div
+        className="progress-fill"
+        style={{
+          width: `${progress}%`,
+          background: STREAM_TYPE_COLORS[stream.streamType],
+        }}
+      />
+    </div>
+  )
+}
+
+function StreamCard({
+  stream,
+  direction,
+  onWithdraw,
+  onCancel,
+}: {
+  stream: Stream
+  direction: 'incoming' | 'outgoing'
+  onWithdraw?: (id: number) => void
+  onCancel?: (id: number) => void
+}) {
+  return (
+    <div className={`stream-card ${direction}`}>
+      <div className="stream-card-header">
+        <div className="stream-meta">
+          <span
+            className="stream-type-badge"
+            style={{ color: STREAM_TYPE_COLORS[stream.streamType] }}
+          >
+            {STREAM_TYPE_LABELS[stream.streamType]}
+          </span>
+          <span className="stream-note">{stream.note}</span>
+        </div>
+        <div className="stream-id">#{stream.id}</div>
+      </div>
+
+      <div className="stream-parties">
+        <div className="party">
+          <div className="party-label">From</div>
+          <div className="party-name">{stream.senderUsername}</div>
+        </div>
+        <div className="flow-arrow">
+          <div className="flow-line" style={{ background: STREAM_TYPE_COLORS[stream.streamType] }} />
+          <div className="flow-dot" style={{ background: STREAM_TYPE_COLORS[stream.streamType] }} />
+        </div>
+        <div className="party">
+          <div className="party-label">To</div>
+          <div className="party-name">{stream.recipientUsername}</div>
+        </div>
+      </div>
+
+      <div className="stream-numbers">
+        <div className="number-block">
+          <div className="number-label">
+            {direction === 'incoming' ? 'Claimable now' : 'Streamed so far'}
+          </div>
+          <div className="number-value">
+            <LiveCounter stream={stream} />
+            <span className="number-unit"> INIT</span>
+          </div>
+        </div>
+        <div className="number-block">
+          <div className="number-label">Rate</div>
+          <div className="number-value rate">{formatRate(stream.ratePerMs)}</div>
+        </div>
+        <div className="number-block">
+          <div className="number-label">Total</div>
+          <div className="number-value">{formatINIT(stream.totalDeposited)} INIT</div>
+        </div>
+      </div>
+
+      <ProgressBar stream={stream} />
+
+      <div className="stream-footer">
+        <span className="time-remaining">{timeRemaining(stream.endTimeMs)}</span>
+        <div className="stream-actions">
+          {direction === 'incoming' && onWithdraw && (
+            <button className="btn-withdraw" onClick={() => onWithdraw(stream.id)}>
+              Withdraw
+            </button>
+          )}
+          {direction === 'outgoing' && onCancel && (
+            <button className="btn-cancel" onClick={() => onCancel(stream.id)}>
+              Cancel
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function CreateStreamForm({ onClose, senderAddress }: { onClose: () => void, senderAddress: string }) {
+  const { createStream } = useContract()
+  const [form, setForm] = useState({
+    recipient: '',
+    amount: '',
+    duration: '30',
+    durationUnit: 'days',
+    streamType: 'salary',
+    note: '',
+  })
+  const [step, setStep] = useState<'form' | 'confirm' | 'success'>('form')
+
+  const durationMs = () => {
+    const n = parseFloat(form.duration)
+    const units: Record<string, number> = {
+      minutes: 60_000,
+      hours: 3_600_000,
+      days: 86_400_000,
+    }
+    return n * (units[form.durationUnit] || 86_400_000)
+  }
+
+  const ratePerSec = () => {
+    const ms = durationMs()
+    if (!ms || !form.amount) return 0
+    return (parseFloat(form.amount) / ms) * 1000
+  }
+
+  if (step === 'success') {
+    return (
+      <div className="modal-overlay">
+        <div className="modal success-modal">
+          <div className="success-icon">✓</div>
+          <div className="success-title">Stream created</div>
+          <div className="success-sub">
+            Streaming {form.amount} INIT to {form.recipient} over {form.duration} {form.durationUnit}
+          </div>
+          <div className="success-rate">
+            {ratePerSec().toFixed(6)} INIT/sec flowing now
+          </div>
+          <button className="btn-primary" onClick={onClose}>Back to dashboard</button>
+        </div>
+      </div>
+    )
+  }
+
+  if (step === 'confirm') {
+    return (
+      <div className="modal-overlay">
+        <div className="modal">
+          <div className="modal-title">Confirm stream</div>
+          <div className="confirm-row">
+            <span>Recipient</span><span>{form.recipient}</span>
+          </div>
+          <div className="confirm-row">
+            <span>Amount</span><span>{form.amount} INIT</span>
+          </div>
+          <div className="confirm-row">
+            <span>Duration</span><span>{form.duration} {form.durationUnit}</span>
+          </div>
+          <div className="confirm-row highlight">
+            <span>Rate</span><span>{ratePerSec().toFixed(6)} INIT/sec</span>
+          </div>
+          <div className="confirm-row">
+            <span>Platform fee</span><span>0.1%</span>
+          </div>
+          <div className="confirm-note">
+            Session key will be created — you sign once, the stream runs automatically for {form.duration} {form.durationUnit}.
+          </div>
+          <div className="modal-actions">
+            <button className="btn-secondary" onClick={() => setStep('form')}>Back</button>
+            <button className="btn-primary" onClick={async () => {
+              try {
+                const amountUinit = Math.floor(parseFloat(form.amount) * 1_000_000)
+                await createStream(senderAddress, form.recipient, amountUinit, durationMs())
+                setStep('success')
+              } catch(e: any) {
+                alert('Transaction failed: ' + e.message)
+              }
+            }}>
+              Sign &amp; Create Stream
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="modal-overlay">
+      <div className="modal">
+        <div className="modal-header">
+          <div className="modal-title">New stream</div>
+          <button className="modal-close" onClick={onClose}>✕</button>
+        </div>
+
+        <div className="form-group">
+          <label>Recipient .init username</label>
+          <input
+            className="form-input"
+            placeholder="alice.init"
+            value={form.recipient}
+            onChange={e => setForm({ ...form, recipient: e.target.value })}
+          />
+        </div>
+
+        <div className="form-group">
+          <label>Total amount (INIT)</label>
+          <input
+            className="form-input"
+            type="number"
+            placeholder="1000"
+            value={form.amount}
+            onChange={e => setForm({ ...form, amount: e.target.value })}
+          />
+        </div>
+
+        <div className="form-group form-row">
+          <div style={{ flex: 1 }}>
+            <label>Duration</label>
+            <input
+              className="form-input"
+              type="number"
+              value={form.duration}
+              onChange={e => setForm({ ...form, duration: e.target.value })}
+            />
+          </div>
+          <div style={{ flex: 1 }}>
+            <label>Unit</label>
+            <select
+              className="form-input"
+              value={form.durationUnit}
+              onChange={e => setForm({ ...form, durationUnit: e.target.value })}
+            >
+              <option value="minutes">Minutes</option>
+              <option value="hours">Hours</option>
+              <option value="days">Days</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="form-group">
+          <label>Stream type</label>
+          <select
+            className="form-input"
+            value={form.streamType}
+            onChange={e => setForm({ ...form, streamType: e.target.value })}
+          >
+            <option value="salary">Salary</option>
+            <option value="subscription">Subscription</option>
+            <option value="rental">Rental</option>
+            <option value="grant">Grant</option>
+            <option value="custom">Custom</option>
+          </select>
+        </div>
+
+        <div className="form-group">
+          <label>Note (optional)</label>
+          <input
+            className="form-input"
+            placeholder="Monthly salary"
+            value={form.note}
+            onChange={e => setForm({ ...form, note: e.target.value })}
+          />
+        </div>
+
+        {form.amount && form.duration && (
+          <div className="rate-preview">
+            <span>Rate preview</span>
+            <span className="rate-value">{ratePerSec().toFixed(6)} INIT/sec</span>
+          </div>
+        )}
+
+        <div className="modal-actions">
+          <button className="btn-secondary" onClick={onClose}>Cancel</button>
+          <button
+            className="btn-primary"
+            onClick={() => setStep('confirm')}
+            disabled={!form.recipient || !form.amount || !form.duration}
+          >
+            Continue
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function EcosystemTicker() {
+  const [totalPerSec, setTotalPerSec] = useState(0)
+  const [totalEver, setTotalEver] = useState(142857.334)
+
+  useEffect(() => {
+    // Sum of all mock active streams
+    const allStreams = [...MOCK_STREAMS, ...MOCK_OUTGOING]
+    const rateSum = allStreams.reduce((acc, s) => acc + s.ratePerMs * 1000, 0)
+    setTotalPerSec(rateSum)
+
+    const interval = setInterval(() => {
+      setTotalEver(prev => prev + rateSum / 10)
+    }, 100)
+    return () => clearInterval(interval)
+  }, [])
+
+  return (
+    <div className="ecosystem-ticker">
+      <div className="ticker-item">
+        <div className="ticker-label">Global flow rate</div>
+        <div className="ticker-value">{totalPerSec.toFixed(4)} INIT/sec</div>
+      </div>
+      <div className="ticker-divider" />
+      <div className="ticker-item">
+        <div className="ticker-label">All-time streamed</div>
+        <div className="ticker-value">{totalEver.toFixed(2)} INIT</div>
+      </div>
+      <div className="ticker-divider" />
+      <div className="ticker-item">
+        <div className="ticker-label">Active streams</div>
+        <div className="ticker-value">3</div>
+      </div>
+      <div className="ticker-divider" />
+      <div className="ticker-item">
+        <div className="ticker-label">Network</div>
+        <div className="ticker-value" style={{ color: '#00c896' }}>fluvio-1 ●</div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Main App ──────────────────────────────────────────────────────────────
+
+type Tab = 'dashboard' | 'explore'
+
+export default function App() {
+  const [tab, setTab] = useState<Tab>('dashboard')
+  const [showCreate, setShowCreate] = useState(false)
+  const { wallet, connect, disconnect } = useWallet()
+  const connected = wallet.connected
+  const username = wallet.username || 'shahmeer.init'
+  const [withdrawnIds, setWithdrawnIds] = useState<Set<number>>(new Set())
+  const [notification, setNotification] = useState<string | null>(null)
+
+  const showNotif = (msg: string) => {
+    setNotification(msg)
+    setTimeout(() => setNotification(null), 3000)
+  }
+
+  const handleWithdraw = (id: number) => {
+    setWithdrawnIds(prev => new Set([...prev, id]))
+    showNotif(`Withdrawal successful — INIT sent to ${username}`)
+  }
+
+  const handleCancel = (id: number) => {
+    showNotif(`Stream #${id} cancelled — unstreamed amount returned to vault`)
+  }
+
+  return (
+    <div className="app">
+      {/* Background particle effect */}
+      <div className="bg-grid" />
+
+      {/* Header */}
+      <header className="header">
+        <div className="logo">
+          <div className="logo-mark">
+            <div className="logo-wave" />
+          </div>
+          <span className="logo-text">Fluvio</span>
+          <span className="logo-tag">on Initia</span>
+        </div>
+
+        <nav className="nav">
+          <button
+            className={`nav-btn ${tab === 'dashboard' ? 'active' : ''}`}
+            onClick={() => setTab('dashboard')}
+          >
+            Dashboard
+          </button>
+          <button
+            className={`nav-btn ${tab === 'explore' ? 'active' : ''}`}
+            onClick={() => setTab('explore')}
+          >
+            Explore
+          </button>
+        </nav>
+
+        <div className="header-right">
+          {connected ? (
+            <div className="wallet-connected">
+              <div className="wallet-dot" />
+              <span>{username}</span>
+              <span style={{color:"#00ff88",fontSize:"0.8rem"}}>{wallet.balance} INIT</span>
+            </div>
+          ) : (
+            <button className="btn-connect" onClick={connect}>
+              Connect .init
+            </button>
+          )}
+        </div>
+      </header>
+
+      {/* Ecosystem ticker */}
+      <EcosystemTicker />
+
+      {/* Notification */}
+      {notification && (
+        <div className="notification">{notification}</div>
+      )}
+
+      {/* Main content */}
+      <main className="main">
+        {tab === 'dashboard' && (
+          <>
+            {!connected ? (
+              <div className="connect-prompt">
+                <div className="connect-prompt-icon">⟳</div>
+                <div className="connect-prompt-title">Connect your .init wallet</div>
+                <div className="connect-prompt-sub">
+                  Use InterwovenKit to connect and start streaming INIT in real time
+                </div>
+                <button className="btn-primary large" onClick={connect}>
+                  Connect with .init
+                </button>
+              </div>
+            ) : (
+              <>
+                {/* Stats row */}
+                <div className="stats-row">
+                  <div className="stat-card">
+                    <div className="stat-label">Total incoming</div>
+                    <div className="stat-value">
+                      {formatINIT(
+                        MOCK_STREAMS.reduce((a, s) => a + calcClaimable(s), 0)
+                      )} INIT
+                    </div>
+                    <div className="stat-sub">claimable now</div>
+                  </div>
+                  <div className="stat-card">
+                    <div className="stat-label">Active streams</div>
+                    <div className="stat-value">{MOCK_STREAMS.length + MOCK_OUTGOING.length}</div>
+                    <div className="stat-sub">{MOCK_STREAMS.length} in · {MOCK_OUTGOING.length} out</div>
+                  </div>
+                  <div className="stat-card">
+                    <div className="stat-label">Net flow rate</div>
+                    <div className="stat-value">
+                      +{formatRate(
+                        MOCK_STREAMS.reduce((a, s) => a + s.ratePerMs, 0) -
+                        MOCK_OUTGOING.reduce((a, s) => a + s.ratePerMs, 0)
+                      )}
+                    </div>
+                    <div className="stat-sub">incoming minus outgoing</div>
+                  </div>
+                </div>
+
+                {/* Incoming streams */}
+                <div className="section">
+                  <div className="section-header">
+                    <div className="section-title">Incoming streams</div>
+                    <div className="section-count">{MOCK_STREAMS.length}</div>
+                  </div>
+                  <div className="stream-list">
+                    {MOCK_STREAMS.map(s => (
+                      <StreamCard
+                        key={s.id}
+                        stream={s}
+                        direction="incoming"
+                        onWithdraw={handleWithdraw}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                {/* Outgoing streams */}
+                <div className="section">
+                  <div className="section-header">
+                    <div className="section-title">Outgoing streams</div>
+                    <div className="section-count">{MOCK_OUTGOING.length}</div>
+                    <button className="btn-new" onClick={() => setShowCreate(true)}>
+                      + New stream
+                    </button>
+                  </div>
+                  <div className="stream-list">
+                    {MOCK_OUTGOING.map(s => (
+                      <StreamCard
+                        key={s.id}
+                        stream={s}
+                        direction="outgoing"
+                        onCancel={handleCancel}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+          </>
+        )}
+
+        {tab === 'explore' && (
+          <div className="explore-tab">
+            <div className="explore-header">
+              <div className="explore-title">All streams on fluvio-1</div>
+              <div className="explore-sub">
+                Real-time view of every active stream on the Fluvio appchain
+              </div>
+            </div>
+            <div className="stream-list">
+              {[...MOCK_STREAMS, ...MOCK_OUTGOING].map(s => (
+                <StreamCard key={s.id} stream={s} direction="incoming" />
+              ))}
+            </div>
+          </div>
+        )}
+      </main>
+
+      {/* Create stream modal */}
+      {showCreate && <CreateStreamForm onClose={() => setShowCreate(false)} senderAddress={wallet.address} />}
+
+      {/* Footer */}
+      <footer className="footer">
+        <span>Built on Initia · fluvio-1 appchain</span>
+        <span className="footer-tag">Money flows, not moves.</span>
+      </footer>
+    </div>
+  )
+}

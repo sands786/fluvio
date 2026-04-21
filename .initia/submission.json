@@ -1,0 +1,44 @@
+{
+  "project_name": "Fluvio",
+  "tagline": "Real-time money streaming on Initia. Money flows, not moves.",
+  "track": "DeFi",
+  "chain_id": "fluvio-1",
+  "contract_address": "0x1234",
+  "frontend_url": "https://fluvio.vercel.app",
+  "github_url": "https://github.com/sands786/fluvio",
+  "demo_video": "https://youtube.com/watch?v=REPLACE_AFTER_RECORDING",
+  "native_features": [
+    "Auto-signing/Session UX",
+    ".init usernames",
+    "Interwoven Bridge"
+  ],
+  "description": "Fluvio is a real-time money streaming protocol on a dedicated Initia appchain. Instead of sending lump-sum payments, users stream INIT continuously at rates like 0.00116 INIT/second. Initia's 100ms blocks make this genuinely real-time — not a JavaScript illusion like Superfluid on Ethereum. Session keys (auto-signing) enable streams that run for days without wallet popups. .init usernames replace hex addresses. The Interwoven Bridge lets users deposit from any chain. The appchain captures 0.1% fee on all streamed value.",
+  "team": [
+    {
+      "name": "Shahmeer",
+      "role": "Full-stack developer",
+      "github": "sands786",
+      "twitter": "husnain50376345"
+    }
+  ],
+  "contracts": [
+    {
+      "name": "stream_vault",
+      "path": "contracts/sources/stream_vault.move",
+      "description": "Per-user escrow vault — holds deposited INIT and tracks locked vs free balance"
+    },
+    {
+      "name": "stream_core",
+      "path": "contracts/sources/stream_core.move",
+      "description": "Core streaming logic — rate_per_ms calculation using Initia millisecond timestamps"
+    },
+    {
+      "name": "stream_registry",
+      "path": "contracts/sources/stream_registry.move",
+      "description": "Public stats oracle — global flow rate, total streams, all-time value"
+    }
+  ],
+  "why_initia": "Fluvio's value proposition is inseparable from Initia. 100ms blocks make the streaming counter genuinely real-time. Session keys make multi-day streams possible without wallet popups. .init usernames make payment identity human-readable. Interwoven Bridge makes cross-chain onboarding native. Remove any of these four features and Fluvio degrades to something that already exists on Ethereum.",
+  "revenue_model": "0.1% platform fee on all streamed value captured by the fluvio-1 appchain. Scales linearly with streaming volume.",
+  "submission_date": "2026-04-26"
+}

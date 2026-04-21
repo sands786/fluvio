@@ -1,0 +1,9 @@
+[package]
+name = "fluvio"
+version = "1.0.0"
+
+[addresses]
+fluvio = "0xF229399249B5E72455CAD9D5B2C17AF99B7E3B4A"
+
+[dependencies]
+InitiaStdlib = { git = "https://github.com/initia-labs/move-natives.git", subdir = "initia_stdlib", rev = "main" }
