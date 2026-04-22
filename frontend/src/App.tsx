@@ -4,6 +4,7 @@ import { useWallet } from './useWallet'
 import { useStreams } from './useStreams'
 import { useContract, initializeVault, grantSessionKey } from './useContract'
 import { useSessionKey } from './hooks/useSessionKey'
+import { BridgeTab } from './BridgeTab.jsx'
 
 // Types
 interface Stream {
@@ -265,7 +266,7 @@ function CreateStreamForm({ onClose, senderAddress, onSuccess }: { onClose: () =
 }
 
 // Main App
-type Tab = 'dashboard' | 'explore'
+type Tab = 'dashboard' | 'explore' | 'bridge'
 
 export default function App() {
   const [tab, setTab] = useState<Tab>('dashboard')
@@ -331,6 +332,8 @@ export default function App() {
         <nav className="nav">
           <button className={`nav-btn ${tab === 'dashboard' ? 'active' : ''}`} onClick={() => setTab('dashboard')}>Dashboard</button>
           <button className={`nav-btn ${tab === 'explore' ? 'active' : ''}`} onClick={() => setTab('explore')}>Explore</button>
+          <button className={`nav-btn ${tab === 'bridge' ? 'active' : ''}`} onClick={() => setTab('bridge')}>Bridge</button>
+          
         </nav>
         <div className="header-right">
           {wallet.connected ? (
@@ -483,6 +486,9 @@ export default function App() {
               )}
             </div>
           </div>
+        )}
+        {tab === 'bridge' && (
+          <BridgeTab walletAddress={wallet.address} onSuccess={refetch} />
         )}
       </main>
       {showCreate && <CreateStreamForm onClose={() => setShowCreate(false)} senderAddress={wallet.address} onSuccess={refetch} />}
