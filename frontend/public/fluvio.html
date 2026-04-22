@@ -1396,6 +1396,7 @@
 
             state.wallet = { address: addr, username };
             document.getElementById('walletBtn').textContent = addr.slice(0,10) + '...';
+            document.getElementById('walletBtn').onclick = disconnectWallet;
             document.getElementById('walletBtn').classList.add('connected');
 
             await loadData();
@@ -1403,6 +1404,23 @@
         } catch(e) {
             console.error('Connect wallet error:', e);
         }
+    }
+
+    function disconnectWallet() {
+        state.wallet = null;
+        state.sessionKey = null;
+        state.streams = [];
+        state.l1Balance = null;
+        state.vaultBalance = null;
+        const btn = document.getElementById('walletBtn');
+        btn.textContent = 'Connect Wallet';
+        btn.classList.remove('connected');
+        btn.onclick = connectWallet;
+        const badge = document.getElementById('sessionBadge');
+        badge.className = 'session-badge inactive';
+        badge.innerHTML = '<div class="dot"></div> Session Key';
+        badge.onclick = enableSessionKey;
+        render();
     }
 
     // ============================================
