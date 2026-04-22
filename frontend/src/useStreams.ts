@@ -113,7 +113,7 @@ export function useStreams(walletHexAddress: string) {
   return { incomingStreams, outgoingStreams, allStreams, loading, refetch: fetchStreams }
 }
 
-export async function getClaimableAmount(streamId: number, stream: OnChainStream): number {
+export async function getClaimableAmount(stream: OnChainStream): number {
   const now = Date.now()
   const elapsed = Math.min(now, stream.endTimeMs) - stream.startTimeMs
   if (elapsed <= 0) return 0
