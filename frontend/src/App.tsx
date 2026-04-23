@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react'
 import './App.css'
 import { useWallet } from './useWallet'
 import { useStreams } from './useStreams'
-import { useContract, initializeVault, depositToVault, grantSessionKey } from './useContract'
+import { useContract, initializeVault, grantSessionKey } from './useContract'
 import { useSessionKey } from './hooks/useSessionKey'
 import { BridgeTab } from './BridgeTab.jsx'
 
@@ -94,7 +94,7 @@ function claimableAmount(stream: Stream, nowMs: number): number {
   // So actual rate in INIT/ms = chain_rate_per_ms / 1000 / 1_000_000
   // earned INIT = elapsedMs * chain_rate / 1000 / 1_000_000
   // Since ratePerMs = chain_rate / 1_000_000, earned = elapsedMs * ratePerMs / 1000
-  const earned = elapsedMs * stream.ratePerMs
+  const earned = (elapsedMs * stream.ratePerMs) / 1000
   return Math.min(stream.totalDeposited - stream.withdrawn, earned)
 }
 
@@ -104,13 +104,13 @@ const EcosystemTicker = () => {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const res = await fetch('https://rest.testnet.initia.xyz/initia/move/v1/accounts/0xc809333033602fea438a4917dd1890d0f3eb8851/resources')
+        const res = await fetch('https://rest.testnet.initia.xyz/initia/move/v1/accounts/0xf229399249b5e72455cad9d5b2c17af99b7e3b4a/resources')
         const data = await res.json()
         const registry = data.resources?.find((r: any) => r.struct_tag.includes('stream_core::StreamRegistry'))
         if (registry) {
           const parsed = JSON.parse(registry.move_resource)
           const handle = parsed.data.streams.handle
-          const entriesRes = await fetch(`https://rest.testnet.initia.xyz/initia/move/v1/tables/${handle}/entries?limit=1000`)
+          const entriesRes = await fetch(`https://rest.testnet.initia.xyz/initia/move/v1/tables/${handle}/entries`)
           const entriesData = await entriesRes.json()
           const activeStreams = (entriesData.table_entries || []).filter((e: any) => {
             const s = JSON.parse(e.value)
@@ -184,9 +184,6 @@ function CreateStreamForm({ onClose, senderAddress, onSuccess }: { onClose: () =
           await initializeVault(senderAddress)
           await new Promise(r => setTimeout(r, 3000))
         }
-        // Deposit the stream amount into vault before creating stream
-        await depositToVault(senderAddress, amountUinit)
-        await new Promise(r => setTimeout(r, 3000))
         const result = await createStream(senderAddress, form.recipient, amountUinit, durationMs(), 0, form.note || '', senderAddress.slice(0,10) + '.init', form.recipient.slice(0,10) + '.init')
       console.log("Stream created:", result)
         onSuccess?.()
@@ -370,55 +367,55 @@ export default function App() {
         {tab === 'dashboard' && (
           <>
             <div className="stats-grid">
-              <div className="stat-card"><div className="stat-card-value">{wallet.balance}</div><div className="stat-card-label">Your Balance (INIT)</div></div>
-              <div className="stat-card"><div className="stat-card-value">0.0015</div><div className="stat-card-label">Global Flow Rate (INIT/sec)</div></div>
-              <div className="stat-card"><div className="stat-card-value">3</div><div className="stat-card-label">Active Streams</div></div>
+              <div className="stat-card"><div className="stat-value">{wallet.balance}</div><div className="stat-label">Your Balance (INIT)</div></div>
+              <div className="stat-card"><div className="stat-value">0.0015</div><div className="stat-label">Global Flow Rate (INIT/sec)</div></div>
+              <div className="stat-card"><div className="stat-value">3</div><div className="stat-label">Active Streams</div></div>
             </div>
 
-            <div className="stream-list">
+            <div className="streams-section">
               <div className="section-header">
                 <h2>Incoming streams</h2>
               </div>
-              <div className="stream-list">
+              <div className="streams-list">
                 {incomingStreams.map(stream => (
                   <div key={stream.id} className="stream-card">
-                    <div className="stream-card-mid">
-                      <span className="stream-from" data-type={stream.streamType}>{stream.streamType}</span>
-                      <span className="stream-addresses">{stream.senderUsername}</span>
+                    <div className="stream-header">
+                      <span className="stream-type" data-type={stream.streamType}>{stream.streamType}</span>
+                      <span className="stream-sender">{stream.senderUsername}</span>
                     </div>
-                    <div className="stream-card-right">
-                      <span className="stream-claimable-value">{stream.claimable.toFixed(4)} INIT</span>
-                      <span className="stream-claimable-label">claimable</span>
+                    <div className="stream-amount">
+                      <span className="amount-value">{stream.claimable.toFixed(4)} INIT</span>
+                      <span className="amount-label">claimable</span>
                     </div>
-                    <div className="stream-progress-bar">
-                      <div className="stream-progress-fill" style={{width: `${(stream.claimable / stream.totalDeposited) * 100}%`}} />
+                    <div className="stream-progress">
+                      <div className="progress-bar" style={{width: `${(stream.claimable / stream.totalDeposited) * 100}%`}} />
                     </div>
-                    <button className="stream-action-btn withdraw" onClick={() => handleWithdraw(stream.id)}>Withdraw</button>
+                    <button className="btn-withdraw" onClick={() => handleWithdraw(stream.id)}>Withdraw</button>
                   </div>
                 ))}
               </div>
             </div>
 
-            <div className="stream-list">
+            <div className="streams-section">
               <div className="section-header">
                 <h2>Outgoing streams</h2>
-                <button className="btn btn-primary" onClick={() => setShowCreate(true)}>+ New stream</button>
+                <button className="btn-new-stream" onClick={() => setShowCreate(true)}>+ New stream</button>
               </div>
-              <div className="stream-list">
+              <div className="streams-list">
                 {outgoingStreams.map(stream => (
                   <div key={stream.id} className="stream-card">
-                    <div className="stream-card-mid">
-                      <span className="stream-from" data-type={stream.streamType}>{stream.streamType}</span>
-                      <span className="stream-addresses">{stream.recipientUsername}</span>
+                    <div className="stream-header">
+                      <span className="stream-type" data-type={stream.streamType}>{stream.streamType}</span>
+                      <span className="stream-recipient">{stream.recipientUsername}</span>
                     </div>
-                    <div className="stream-card-right">
-                      <span className="stream-claimable-value">{stream.claimable.toFixed(4)} INIT</span>
-                      <span className="stream-claimable-label">streamed so far</span>
+                    <div className="stream-amount">
+                      <span className="amount-value">{stream.claimable.toFixed(4)} INIT</span>
+                      <span className="amount-label">streamed so far</span>
                     </div>
-                    <div className="stream-progress-bar">
-                      <div className="stream-progress-fill" style={{width: `${(stream.claimable / stream.totalDeposited) * 100}%`}} />
+                    <div className="stream-progress">
+                      <div className="progress-bar" style={{width: `${(stream.claimable / stream.totalDeposited) * 100}%`}} />
                     </div>
-                    <button className="stream-action-btn cancel" onClick={() => handleCancel(stream.id)}>Cancel</button>
+                    <button className="btn-cancel" onClick={() => handleCancel(stream.id)}>Cancel</button>
                   </div>
                 ))}
               </div>
