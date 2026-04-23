@@ -110,7 +110,7 @@ const EcosystemTicker = () => {
         if (registry) {
           const parsed = JSON.parse(registry.move_resource)
           const handle = parsed.data.streams.handle
-          const entriesRes = await fetch(`https://rest.testnet.initia.xyz/initia/move/v1/tables/${handle}/entries`)
+          const entriesRes = await fetch(`https://rest.testnet.initia.xyz/initia/move/v1/tables/${handle}/entries?limit=1000`)
           const entriesData = await entriesRes.json()
           const activeStreams = (entriesData.table_entries || []).filter((e: any) => {
             const s = JSON.parse(e.value)

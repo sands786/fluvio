@@ -47,7 +47,7 @@ async function fetchAllStreams(): Promise<OnChainStream[]> {
   const tableHandle = registryData.data.streams.handle
 
   const entriesRes = await fetch(
-    `https://rest.testnet.initia.xyz/initia/move/v1/tables/${tableHandle}/entries`
+    `https://rest.testnet.initia.xyz/initia/move/v1/tables/${tableHandle}/entries?limit=1000`
   )
   const entriesData = await entriesRes.json()
 
