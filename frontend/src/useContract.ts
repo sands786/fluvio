@@ -25,7 +25,7 @@ export async function broadcastMoveMsg(moduleName: string, functionName: string,
   const accounts = await offlineSigner.getAccounts()
   const actualSender = accounts[0].address
 
-  const accRes = await fetch(REST_URL + '/cosmos/auth/v1beta1/accounts/' + actualSender)
+  const accRes = await fetch(REST_URL + '/cosmos/auth/v1beta1/accounts/' + actualSender, { cache: 'no-store' })
   const accData = await accRes.json()
   const baseAccount = accData.account?.base_account || accData.account
   const accountNumber = parseInt(baseAccount?.account_number || '0')
@@ -166,7 +166,7 @@ export async function sessionBroadcastMoveMsg(
   const [sessionAccount] = await sessionWallet.getAccounts()
 
   // Get session key account info
-  const accRes = await fetch(REST_URL + '/cosmos/auth/v1beta1/accounts/' + sessionAddress)
+  const accRes = await fetch(REST_URL + '/cosmos/auth/v1beta1/accounts/' + sessionAddress, { cache: 'no-store' })
   const accData = await accRes.json()
   const baseAccount = accData.account?.base_account || accData.account
   const accountNumber = parseInt(baseAccount?.account_number || '0')
