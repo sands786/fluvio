@@ -259,6 +259,13 @@ export function useContract() {
   return { createStream, withdrawStream, cancelStream }
 }
 
+
+export async function depositToVault(senderAddress: string, amountUinit: number) {
+  const { bcs } = await import('@initia/initia.js')
+  const amountArg = Buffer.from(bcs.u64().serialize(BigInt(amountUinit)).toBytes()).toString('base64')
+  return broadcastMoveMsg('stream_vault', 'deposit', [amountArg])
+}
+
 export async function initializeVault(senderAddress: string) {
   return broadcastMoveMsg('stream_vault', 'initialize_vault', [])
 }

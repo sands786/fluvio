@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react'
 import './App.css'
 import { useWallet } from './useWallet'
 import { useStreams } from './useStreams'
-import { useContract, initializeVault, grantSessionKey } from './useContract'
+import { useContract, initializeVault, depositToVault, grantSessionKey } from './useContract'
 import { useSessionKey } from './hooks/useSessionKey'
 import { BridgeTab } from './BridgeTab.jsx'
 
@@ -184,6 +184,9 @@ function CreateStreamForm({ onClose, senderAddress, onSuccess }: { onClose: () =
           await initializeVault(senderAddress)
           await new Promise(r => setTimeout(r, 3000))
         }
+        // Deposit the stream amount into vault before creating stream
+        await depositToVault(senderAddress, amountUinit)
+        await new Promise(r => setTimeout(r, 3000))
         const result = await createStream(senderAddress, form.recipient, amountUinit, durationMs(), 0, form.note || '', senderAddress.slice(0,10) + '.init', form.recipient.slice(0,10) + '.init')
       console.log("Stream created:", result)
         onSuccess?.()
