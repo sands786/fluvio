@@ -2,7 +2,7 @@ export const CHAIN_CONFIG = {
   chainId: 'initiation-2',
   rpcUrl: 'https://rpc.testnet.initia.xyz',
   lcdUrl: "https://rest.testnet.initia.xyz",
-  contractAddress: 'init17g5nnyjfkhnjg4w2m82m9st6lxdhuw62zjgsmd',
+  contractAddress: 'init1eqynxvpnvqh75su2fyta6xys6re7hzz3rkapqx',
   denom: 'uinit',
   decimals: 6,
 }

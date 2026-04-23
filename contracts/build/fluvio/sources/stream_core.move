@@ -211,8 +211,7 @@ module fluvio::stream_core {
             stream.active = false;
         };
 
-        // In production: transfer claimable from module resource account to recipient
-        // stream_vault::transfer_to_recipient(recipient_addr, claimable);
+        stream_vault::transfer_to_recipient(stream.sender, recipient_addr, claimable);
     }
 
     // --- Cancel Stream -----------------------------------------------------

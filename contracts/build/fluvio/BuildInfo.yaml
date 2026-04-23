@@ -3,13 +3,13 @@ compiled_package_info:
   package_name: fluvio
   address_alias_instantiation:
     cafe: 000000000000000000000000000000000000000000000000000000000000cafe
-    fluvio: 000000000000000000000000f229399249b5e72455cad9d5b2c17af99b7e3b4a
+    fluvio: 000000000000000000000000c809333033602fea438a4917dd1890d0f3eb8851
     init_fa: 8e4733bdabcf7d4afc3d14f0dd46c9bf52fb0fce9e4b996c939e195b8bc891d9
     initia_hooks: "0000000000000000000000000000000000000000000000000000000000000002"
     initia_std: "0000000000000000000000000000000000000000000000000000000000000001"
     relayer: 0000000000000000000000003d18d54532fc42e567090852db6eb21fa528f952
     std: "0000000000000000000000000000000000000000000000000000000000000001"
-  source_digest: 730FB5D0A521FCBA3680FB37251D86E8CF9149AA8E13BEDC0334F048EA147F48
+  source_digest: 8F04E938A85F10016AC414CE8528F2664F6E79D0FC2181AD105C5FC0D31C0B6E
   build_flags:
     dev_mode: false
     test_mode: false
@@ -22,7 +22,7 @@ compiled_package_info:
     force_recompilation: false
     additional_named_addresses: {}
     fetch_deps_only: false
-    skip_fetch_latest_git_deps: false
+    skip_fetch_latest_git_deps: true
     compiler_config:
       bytecode_version: 7
       known_attributes:

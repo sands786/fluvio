@@ -17,7 +17,7 @@ export interface OnChainStream {
   cancelled: boolean
 }
 
-const HEX = '0xf229399249b5e72455cad9d5b2c17af99b7e3b4a'
+const HEX = '0xc809333033602fea438a4917dd1890d0f3eb8851'
 
 function streamTypeFromIndex(idx: number): OnChainStream['streamType'] {
   const types: OnChainStream['streamType'][] = ['salary', 'subscription', 'rental', 'grant', 'custom']

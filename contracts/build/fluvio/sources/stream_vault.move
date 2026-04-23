@@ -18,11 +18,23 @@ module fluvio::stream_vault {
         total_withdrawn_ever: u64,
     }
 
-    fun init_module(_account: &signer) {}
+    struct ModuleStore has key {
+        extend_ref: object::ExtendRef,
+    }
+
+    fun init_module(account: &signer) {
+        let constructor_ref = object::create_named_object(account, b"fluvio_vault_signer");
+        let extend_ref = object::generate_extend_ref(&constructor_ref);
+        move_to(account, ModuleStore { extend_ref });
+    }
+
+    fun get_module_signer(): signer acquires ModuleStore {
+        let store = borrow_global<ModuleStore>(@fluvio);
+        object::generate_signer_for_extending(&store.extend_ref)
+    }
 
     fun get_init_metadata(): object::Object<fungible_asset::Metadata> {
-        let init_addr = @initia_std;
-        object::address_to_object<fungible_asset::Metadata>(init_addr)
+        object::address_to_object<fungible_asset::Metadata>(@initia_std)
     }
 
     public entry fun initialize_vault(account: &signer) {
@@ -58,7 +70,7 @@ module fluvio::stream_vault {
         vault.total_deposited_ever = vault.total_deposited_ever + amount;
     }
 
-    public entry fun withdraw(account: &signer, amount: u64) acquires Vault {
+    public entry fun withdraw(account: &signer, amount: u64) acquires Vault, ModuleStore {
         let addr = signer::address_of(account);
         assert!(exists<Vault>(addr), error::not_found(E_VAULT_NOT_FOUND));
         let vault = borrow_global_mut<Vault>(addr);
@@ -66,6 +78,8 @@ module fluvio::stream_vault {
         assert!(free >= amount, error::resource_exhausted(E_INSUFFICIENT_FREE_BALANCE));
         vault.total_balance = vault.total_balance - amount;
         vault.total_withdrawn_ever = vault.total_withdrawn_ever + amount;
+        let module_signer = get_module_signer();
+        primary_fungible_store::transfer(&module_signer, get_init_metadata(), addr, amount);
     }
 
     public(friend) fun lock_balance(owner: address, amount: u64) acquires Vault {
@@ -81,6 +95,20 @@ module fluvio::stream_vault {
             vault.locked_for_streams = vault.locked_for_streams - amount;
             vault.total_balance = vault.total_balance - amount;
         }
+    }
+
+    public(friend) fun transfer_to_recipient(sender_owner: address, recipient: address, amount: u64) acquires Vault, ModuleStore {
+        if (exists<Vault>(sender_owner)) {
+            let vault = borrow_global_mut<Vault>(sender_owner);
+            if (vault.locked_for_streams >= amount) {
+                vault.locked_for_streams = vault.locked_for_streams - amount;
+            };
+            if (vault.total_balance >= amount) {
+                vault.total_balance = vault.total_balance - amount;
+            };
+        };
+        let module_signer = get_module_signer();
+        primary_fungible_store::transfer(&module_signer, get_init_metadata(), recipient, amount);
     }
 
     public fun get_balance(addr: address): (u64, u64) acquires Vault {
