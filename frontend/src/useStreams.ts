@@ -94,8 +94,9 @@ export function useStreams(walletHexAddress: string) {
 
       if (walletHexAddress) {
         const hex = walletHexAddress.toLowerCase()
-        setIncomingStreams(streams.filter(s => s.recipient === hex))
-        setOutgoingStreams(streams.filter(s => s.sender === hex))
+        console.log('Stream sample:', streams[0]?.sender, streams[0]?.recipient)
+        setIncomingStreams(streams.filter(s => s.recipient?.toLowerCase() === hex))
+        setOutgoingStreams(streams.filter(s => s.sender?.toLowerCase() === hex))
       }
     } catch (e) {
       console.error('Failed to fetch streams:', e)
