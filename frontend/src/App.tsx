@@ -455,8 +455,8 @@ export default function App() {
             <div className="lp-ticker">
               <div className="lp-ticker-item"><div className="lp-ticker-label">Block Time</div><div className="lp-ticker-val green">100ms</div></div>
               <div className="lp-ticker-item"><div className="lp-ticker-label">Network</div><div className="lp-ticker-val">initiation-2</div></div>
-              <div className="lp-ticker-item"><div className="lp-ticker-label">Global Flow Rate</div><div className="lp-ticker-val green">{ticker.flowRate} INIT/sec</div></div>
-              <div className="lp-ticker-item"><div className="lp-ticker-label">Active Streams</div><div className="lp-ticker-val">{ticker.activeStreams}</div></div>
+              <div className="lp-ticker-item"><div className="lp-ticker-label">Global Flow Rate</div><div className="lp-ticker-val green">{ticker?.flowRate || "0.0000"} INIT/sec</div></div>
+              <div className="lp-ticker-item"><div className="lp-ticker-label">Active Streams</div><div className="lp-ticker-val">{ticker?.activeStreams || "0"}</div></div>
               <div className="lp-ticker-item"><div className="lp-ticker-label">Contract Block</div><div className="lp-ticker-val">#22041965</div></div>
             </div>
           </div>
@@ -466,7 +466,7 @@ export default function App() {
         <section className="lp-stats">
           <div style={{maxWidth:'900px',margin:'0 auto',textAlign:'center'}}>
             <div style={{color:'#888',fontSize:'0.85rem',marginBottom:'1rem',fontWeight:600,textTransform:'uppercase',letterSpacing:'2px'}}>Powering</div>
-            <div className="lp-stat-val">{ticker.flowRate} <span className="unit">INIT/sec</span></div>
+            <div className="lp-stat-val">{ticker?.flowRate || "0.0000"} <span className="unit">INIT/sec</span></div>
             <div style={{color:'rgba(255,255,255,0.7)',fontSize:'1.1rem',margin:'1rem 0 2rem'}}>flowing continuously, every 100 milliseconds, on Initia testnet</div>
             <div style={{color:'#888',fontSize:'1rem',lineHeight:1.8,maxWidth:'700px',margin:'0 auto 1.5rem'}}>Fluvio's smart contracts are live on initiation-2, deployed at block #22041965. Every active stream updates real on-chain state 10 times per second — not client-side JavaScript math.</div>
             <div style={{fontFamily:'Courier New',fontSize:'0.75rem',color:'#888',wordBreak:'break-all'}}>TX: 21D7D1326DA445B2AE9843FC2DE05B9F9BD457FF760EB7BD55E5DAA07106CE64</div>
