@@ -66,7 +66,7 @@ async function fetchAllStreams(): Promise<OnChainStream[]> {
       senderUsername: decodeHexStr(s.sender_username) || s.sender?.slice(0, 12) + '...',
       recipientUsername: decodeHexStr(s.recipient_username) || s.recipient?.slice(0, 12) + '...',
       totalDeposited: totalDeposited / 1_000_000,
-      ratePerMs: parseInt(s.rate_per_ms || '0') / 1_000_000, // chain value / 1M for INIT units
+      ratePerMs: parseInt(s.rate_per_ms || '0') / 1_000_000_000, // chain stores rate*1000 uinit/ms, convert to INIT/ms
       withdrawn: parseInt(s.withdrawn_by_recipient || '0') / 1_000_000,
       startTimeMs: startMs,
       endTimeMs: endMs,

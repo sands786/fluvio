@@ -94,7 +94,7 @@ function claimableAmount(stream: Stream, nowMs: number): number {
   // So actual rate in INIT/ms = chain_rate_per_ms / 1000 / 1_000_000
   // earned INIT = elapsedMs * chain_rate / 1000 / 1_000_000
   // Since ratePerMs = chain_rate / 1_000_000, earned = elapsedMs * ratePerMs / 1000
-  const earned = (elapsedMs * stream.ratePerMs) / 1000
+  const earned = elapsedMs * stream.ratePerMs
   return Math.min(stream.totalDeposited - stream.withdrawn, earned)
 }
 
