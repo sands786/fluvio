@@ -1,6 +1,5 @@
 import { useCallback } from 'react'
 import { CHAIN_CONFIG } from './chain'
-import { Msg, MsgGrantAuthorization, AuthorizationGrant, GenericAuthorization, MsgExecAuthorized, bcs } from '@initia/initia.js'
 
 const REST_URL = 'https://rest.testnet.initia.xyz'
 const CHAIN_ID = 'initiation-2'
@@ -32,7 +31,7 @@ export async function broadcastMoveMsg(moduleName: string, functionName: string,
   const accountNumber = parseInt(baseAccount?.account_number || '0')
   const sequence = parseInt(baseAccount?.sequence || '0')
 
-  // Msg already imported
+  const { Msg } = await import('@initia/initia.js')
   const msg = Msg.fromAmino(buildMoveMsgAmino(actualSender, moduleName, functionName, args))
   const msgAny = msg.packAny()
 
@@ -99,61 +98,51 @@ export async function grantSessionKey(userAddress: string, sessionAddress: strin
   const accountNumber = parseInt(baseAccount?.account_number || '0')
   const sequence = parseInt(baseAccount?.sequence || '0')
 
+  const { MsgGrantAuthorization, AuthorizationGrant, GenericAuthorization } = await import('@initia/initia.js')
+  const { encodePubkey, makeAuthInfoBytes, makeSignDoc } = await import('@cosmjs/proto-signing')
+  const { TxRaw, TxBody } = await import('cosmjs-types/cosmos/tx/v1beta1/tx')
+  const { SignMode } = await import('cosmjs-types/cosmos/tx/signing/v1beta1/signing')
+  const { fromBase64 } = await import('@cosmjs/encoding')
+
   const expiry = new Date()
   expiry.setDate(expiry.getDate() + 7)
-  const expiryStr = expiry.toISOString().replace(/\.\d{3}Z$/, 'Z')
 
-  const aminoMsg = {
-    type: 'cosmos-sdk/MsgGrant',
-    value: {
-      granter,
-      grantee: sessionAddress,
-      grant: {
-        authorization: {
-          type: 'cosmos-sdk/GenericAuthorization',
-          value: { msg: '/initia.move.v1.MsgExecute' }
-        },
-        expiration: expiryStr
-      }
-    }
-  }
+  const grant = new AuthorizationGrant(
+    new GenericAuthorization('/initia.move.v1.MsgExecute'),
+    expiry
+  )
+  const grantMsg = new MsgGrantAuthorization(granter, sessionAddress, grant)
+  const msgAny = grantMsg.packAny()
 
-  const signDoc = {
-    chain_id: CHAIN_ID,
-    account_number: String(accountNumber),
-    sequence: String(sequence),
-    fee: { amount: [{ denom: 'uinit', amount: '20000' }], gas: '200000' },
-    msgs: [aminoMsg],
-    memo: 'fluvio-session-grant'
-  }
+  const txBodyBytes = TxBody.encode(TxBody.fromPartial({
+    messages: [{ typeUrl: msgAny.typeUrl, value: msgAny.value }],
+    memo: 'fluvio-session-grant',
+  })).finish()
 
-  const { signed, signature } = await window.keplr.signAmino(CHAIN_ID, granter, signDoc)
-  console.log('Grant signed:', JSON.stringify(signed))
-
-  const broadcastBody = {
-    tx: {
-      msg: signed.msgs,
-      fee: signed.fee,
-      signatures: [{
-        pub_key: { type: 'tendermint/PubKeySecp256k1', value: signature.pub_key.value },
-        signature: signature.signature
-      }],
-      memo: signed.memo
-    },
-    mode: 'sync'
-  }
-
-  const res = await fetch(REST_URL + '/txs', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(broadcastBody)
+  const key = await window.keplr.getKey(CHAIN_ID)
+  const pubkey = encodePubkey({
+    type: 'tendermint/PubKeySecp256k1',
+    value: Buffer.from(key.pubKey).toString('base64'),
   })
-  const result = await res.json()
-  console.log('Grant result:', JSON.stringify(result))
-  if (result.code && result.code !== 0) {
-    throw new Error('Grant failed: ' + (result.raw_log || result.message))
-  }
-  return result
+
+  const authInfoBytes = makeAuthInfoBytes(
+    [{ pubkey, sequence }],
+    [{ denom: 'uinit', amount: '20000' }],
+    200000, undefined, undefined,
+    SignMode.SIGN_MODE_DIRECT
+  )
+
+  const signDoc = makeSignDoc(txBodyBytes, authInfoBytes, CHAIN_ID, accountNumber)
+  const { signed, signature } = await window.keplr.signDirect(CHAIN_ID, granter, signDoc)
+
+  const txRaw = TxRaw.fromPartial({
+    bodyBytes: signed.bodyBytes,
+    authInfoBytes: signed.authInfoBytes,
+    signatures: [fromBase64(signature.signature)],
+  })
+
+  const txBytes = Buffer.from(TxRaw.encode(txRaw).finish()).toString('base64')
+  return broadcastTxBytes(txBytes)
 }
 
 export async function sessionBroadcastMoveMsg(
@@ -170,7 +159,7 @@ export async function sessionBroadcastMoveMsg(
   const { TxRaw, TxBody } = await import('cosmjs-types/cosmos/tx/v1beta1/tx')
   const { SignMode } = await import('cosmjs-types/cosmos/tx/signing/v1beta1/signing')
   const { fromBase64 } = await import('@cosmjs/encoding')
-  // Msg already imported
+  const { Msg } = await import('@initia/initia.js')
 
   // Derive session wallet from mnemonic
   const sessionWallet = await DirectSecp256k1HdWallet.fromMnemonic(sessionMnemonic, { prefix: 'init' })
@@ -188,7 +177,7 @@ export async function sessionBroadcastMoveMsg(
   const innerMsgAny = innerMsg.packAny()
 
   // Build MsgExecAuthorized wrapping it
-  // already imported
+  const { MsgExecAuthorized, Msg: Msg2 } = await import('@initia/initia.js')
   const execMsg = new MsgExecAuthorized(sessionAddress, [innerMsg])
   const execMsgAny = execMsg.packAny()
 
@@ -234,7 +223,7 @@ export function useContract() {
     recipientUsername: string = 'recipient.init'
   ) => {
     if (!senderAddress) throw new Error('Wallet not connected')
-    // bcs already imported
+    const { bcs } = await import('@initia/initia.js')
     const recipientArg = Buffer.from(bcs.address().serialize(recipientAddress).toBytes()).toString('base64')
     const amountArg = Buffer.from(bcs.u64().serialize(BigInt(amountUinit)).toBytes()).toString('base64')
     const durationArg = Buffer.from(bcs.u64().serialize(BigInt(durationMs)).toBytes()).toString('base64')
@@ -253,7 +242,7 @@ export function useContract() {
     sessionMnemonic?: string,
     sessionAddress?: string
   ) => {
-    // bcs already imported
+    const { bcs } = await import('@initia/initia.js')
     const idArg = Buffer.from(bcs.u64().serialize(BigInt(streamId)).toBytes()).toString('base64')
     if (sessionMnemonic && sessionAddress) {
       return sessionBroadcastMoveMsg(sessionMnemonic, sessionAddress, senderAddress, 'stream_core', 'withdraw', [idArg])
@@ -262,7 +251,7 @@ export function useContract() {
   }, [])
 
   const cancelStream = useCallback(async (senderAddress: string, streamId: number) => {
-    // bcs already imported
+    const { bcs } = await import('@initia/initia.js')
     const idArg = Buffer.from(bcs.u64().serialize(BigInt(streamId)).toBytes()).toString('base64')
     return broadcastMoveMsg('stream_core', 'cancel_stream', [idArg])
   }, [])

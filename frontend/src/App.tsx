@@ -277,7 +277,6 @@ export default function App() {
   const { sessionKey, sessionAddress, hasGrant, isGranting, enableSessionKey } = useSessionKey(wallet.address, grantSessionKey)
   const [withdrawnIds, setWithdrawnIds] = useState<Set<number>>(new Set())
   const [nowMs, setNowMs] = useState(Date.now())
-  const [ticker, setTicker] = useState({ blockTime: '100ms', flowRate: '0.0000', activeStreams: 0 })
   useEffect(() => {
     const interval = setInterval(() => setNowMs(Date.now()), 100)
     return () => clearInterval(interval)
@@ -456,8 +455,8 @@ export default function App() {
             <div className="lp-ticker">
               <div className="lp-ticker-item"><div className="lp-ticker-label">Block Time</div><div className="lp-ticker-val green">100ms</div></div>
               <div className="lp-ticker-item"><div className="lp-ticker-label">Network</div><div className="lp-ticker-val">initiation-2</div></div>
-              <div className="lp-ticker-item"><div className="lp-ticker-label">Global Flow Rate</div><div className="lp-ticker-val green">{ticker?.flowRate || "0.0000"} INIT/sec</div></div>
-              <div className="lp-ticker-item"><div className="lp-ticker-label">Active Streams</div><div className="lp-ticker-val">{ticker?.activeStreams || "0"}</div></div>
+              <div className="lp-ticker-item"><div className="lp-ticker-label">Global Flow Rate</div><div className="lp-ticker-val green">{ticker.flowRate} INIT/sec</div></div>
+              <div className="lp-ticker-item"><div className="lp-ticker-label">Active Streams</div><div className="lp-ticker-val">{ticker.activeStreams}</div></div>
               <div className="lp-ticker-item"><div className="lp-ticker-label">Contract Block</div><div className="lp-ticker-val">#22041965</div></div>
             </div>
           </div>
@@ -467,7 +466,7 @@ export default function App() {
         <section className="lp-stats">
           <div style={{maxWidth:'900px',margin:'0 auto',textAlign:'center'}}>
             <div style={{color:'#888',fontSize:'0.85rem',marginBottom:'1rem',fontWeight:600,textTransform:'uppercase',letterSpacing:'2px'}}>Powering</div>
-            <div className="lp-stat-val">{ticker?.flowRate || "0.0000"} <span className="unit">INIT/sec</span></div>
+            <div className="lp-stat-val">{ticker.flowRate} <span className="unit">INIT/sec</span></div>
             <div style={{color:'rgba(255,255,255,0.7)',fontSize:'1.1rem',margin:'1rem 0 2rem'}}>flowing continuously, every 100 milliseconds, on Initia testnet</div>
             <div style={{color:'#888',fontSize:'1rem',lineHeight:1.8,maxWidth:'700px',margin:'0 auto 1.5rem'}}>Fluvio's smart contracts are live on initiation-2, deployed at block #22041965. Every active stream updates real on-chain state 10 times per second — not client-side JavaScript math.</div>
             <div style={{fontFamily:'Courier New',fontSize:'0.75rem',color:'#888',wordBreak:'break-all'}}>TX: 21D7D1326DA445B2AE9843FC2DE05B9F9BD457FF760EB7BD55E5DAA07106CE64</div>
@@ -562,7 +561,7 @@ export default function App() {
               {[
                 ['01','Connect Your .init Wallet','Open Fluvio and connect with Keplr. Your streaming identity is human-readable — not a hex string.'],
                 ['02','Deposit INIT to Your Vault','Deposit INIT from your wallet. Coming from another chain? Use the Interwoven Bridge directly in the app.'],
-                ['03','Create a Stream','Enter the recipient .init username, amount, and duration. Approve once with a session key.'],
+                ['03','Create a Stream','Enter the recipient's .init username, amount, and duration. Approve once with a session key.'],
                 ['04','Watch Money Flow','Your dashboard shows every stream with a live counter ticking every 100ms.'],
               ].map(([n,t,d])=><div key={n} className="lp-step"><div className="lp-step-num">{n}</div><h3>{t}</h3><p>{d}</p></div>)}
             </div>
@@ -577,9 +576,9 @@ export default function App() {
               <h2 className="lp-benefits-h"><span className="lp-hbox">Fluvio enables</span> the top crypto-native organizations to manage recurring payments like airdrops, salaries and grants.</h2>
               <div>
                 {[
-                  ['⚡','Genuinely Real-time','Initia 100ms block time means claimable_amount() returns a different value every tenth of a second.'],
-                  ['✍️','Sign Once, Stream Forever','You approve a stream once, one wallet signature, and it runs automatically for the entire duration.'],
-                  ['👤','.init Identity Layer','Streaming to alice.init feels human. Fluvio uses Initia .init username system for all streams.'],
+                  ['⚡','Genuinely Real-time','Initia's 100ms block time means claimable_amount() returns a different value every tenth of a second.'],
+                  ['✍️','Sign Once, Stream Forever','You approve a stream once — one wallet signature — and it runs automatically for the entire duration.'],
+                  ['👤','.init Identity Layer','Streaming to alice.init feels human. Fluvio uses Initia's .init username system for all streams.'],
                   ['🌐','Interwoven Bridge Native','Deposit from Ethereum, Cosmos, or any Interwoven-connected chain directly in the Fluvio UI.'],
                   ['📡','Ecosystem Oracle','stream_registry.move is a public good. Any smart contract can call get_global_flow_rate().'],
                   ['💰','Appchain Economics','Near-zero gas costs. Micro-streams of $0.001/hr are economically viable on Fluvio.'],
@@ -792,5 +791,3 @@ export default function App() {
     </div>
   )
 }
-/* 
-*/

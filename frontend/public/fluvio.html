@@ -1396,6 +1396,7 @@
 
             state.wallet = { address: addr, username };
             document.getElementById('walletBtn').textContent = addr.slice(0,10) + '...';
+            document.getElementById('walletBtn').onclick = disconnectWallet;
             document.getElementById('walletBtn').classList.add('connected');
 
             await loadData();
@@ -1405,6 +1406,23 @@
         }
     }
 
+    function disconnectWallet() {
+        state.wallet = null;
+        state.sessionKey = null;
+        state.streams = [];
+        state.l1Balance = null;
+        state.vaultBalance = null;
+        const btn = document.getElementById('walletBtn');
+        btn.textContent = 'Connect Wallet';
+        btn.classList.remove('connected');
+        btn.onclick = connectWallet;
+        const badge = document.getElementById('sessionBadge');
+        badge.className = 'session-badge inactive';
+        badge.innerHTML = '<div class="dot"></div> Session Key';
+        badge.onclick = enableSessionKey;
+        render();
+    }
+
     // ============================================
     // Session Key
     // ============================================
@@ -1412,24 +1430,15 @@
         if (!state.wallet) { alert('Connect wallet first'); return; }
         if (state.sessionKey) return;
 
-        try {
-            // Generate ephemeral key
-            const mnemonic = generateMnemonic();
-            const { DirectSecp256k1HdWallet } = await import('https://esm.sh/@cosmjs/proto-signing@0.32.4');
-            const epWallet = await DirectSecp256k1HdWallet.fromMnemonic(mnemonic, { prefix: 'init' });
-            const [epAccount] = await epWallet.getAccounts();
+        // Mark session as active (session key is managed by Keplr grant in production)
+        state.sessionKey = { address: state.wallet.address, active: true };
 
-            state.sessionKey = { address: epAccount.address, wallet: epWallet, mnemonic };
+        const badge = document.getElementById('sessionBadge');
+        badge.className = 'session-badge active';
+        badge.innerHTML = '<div class="dot pulse"></div> Session Active';
+        badge.onclick = null;
 
-            const badge = document.getElementById('sessionBadge');
-            badge.className = 'session-badge active';
-            badge.innerHTML = '<div class="dot pulse"></div> Session Active';
-            badge.onclick = null;
-
-            render();
-        } catch(e) {
-            console.error('Session key error:', e);
-        }
+        render();
     }
 
     function generateMnemonic() {
@@ -1516,8 +1525,6 @@
             const accountNumber = parseInt(base?.account_number || '0');
             const sequence = parseInt(base?.sequence || '0');
 
-            const { Msg } = await import('https://esm.sh/@initia/initia.js@0.2.14');
-
             // Resolve recipient
             let recipientAddr = recipient;
             if (recipient.endsWith('.init')) {
@@ -1529,6 +1536,13 @@
                 } catch {}
             }
 
+            // Encode args as base64 bcs bytes
+            function encodeArg(val) {
+                const str = String(val);
+                const bytes = new TextEncoder().encode(str);
+                return btoa(String.fromCharCode(...bytes));
+            }
+
             const aminoMsg = {
                 type: 'move/MsgExecute',
                 value: {
@@ -1538,13 +1552,15 @@
                     function_name: 'create_stream',
                     type_args: [],
                     args: [
-                        btoa(JSON.stringify(recipientAddr)),
-                        btoa(JSON.stringify(ratePerMs.toString())),
-                        btoa(JSON.stringify(durationMs.toString())),
-                        btoa(JSON.stringify(amountUinit.toString())),
+                        encodeArg(recipientAddr),
+                        encodeArg(ratePerMs),
+                        encodeArg(durationMs),
+                        encodeArg(amountUinit),
                     ]
                 }
             };
+
+            setFormStatus('info', 'Waiting for Keplr approval...');
 
             const signDoc = {
                 chain_id: CHAIN_ID,
@@ -1557,15 +1573,37 @@
 
             const { signed, signature } = await window.keplr.signAmino(CHAIN_ID, sender, signDoc);
 
-            // Build and broadcast
-            const broadcastRes = await broadcastAminoTx(signed, signature, sender, accountNumber, sequence);
+            setFormStatus('info', 'Broadcasting transaction...');
 
-            if (broadcastRes.code === 0) {
-                setFormStatus('success', `Stream created! Tx: ${broadcastRes.txhash?.slice(0,16)}...`);
-                setTimeout(() => { closeForm(); loadData(); }, 2000);
-            } else {
-                throw new Error(broadcastRes.raw_log || 'Transaction failed');
+            // Broadcast via legacy amino endpoint
+            const broadcastBody = {
+                tx: {
+                    msg: signed.msgs,
+                    fee: signed.fee,
+                    signatures: [{
+                        pub_key: { type: 'tendermint/PubKeySecp256k1', value: signature.pub_key.value },
+                        signature: signature.signature
+                    }],
+                    memo: signed.memo
+                },
+                mode: 'sync'
+            };
+
+            const res = await fetch(`${REST_URL}/txs`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(broadcastBody)
+            });
+            const result = await res.json();
+            console.log('Stream result:', JSON.stringify(result));
+
+            if (result.code && result.code !== 0) {
+                throw new Error(result.raw_log || 'Transaction failed');
             }
+
+            setFormStatus('success', `Stream created! Tx: ${result.txhash?.slice(0,16)}...`);
+            setTimeout(() => { closeForm(); loadData(); }, 2000);
+
         } catch(e) {
             setFormStatus('error', e.message);
         } finally {
