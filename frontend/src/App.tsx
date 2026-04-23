@@ -370,55 +370,55 @@ export default function App() {
         {tab === 'dashboard' && (
           <>
             <div className="stats-grid">
-              <div className="stat-card"><div className="stat-value">{wallet.balance}</div><div className="stat-label">Your Balance (INIT)</div></div>
-              <div className="stat-card"><div className="stat-value">0.0015</div><div className="stat-label">Global Flow Rate (INIT/sec)</div></div>
-              <div className="stat-card"><div className="stat-value">3</div><div className="stat-label">Active Streams</div></div>
+              <div className="stat-card"><div className="stat-card-value">{wallet.balance}</div><div className="stat-card-label">Your Balance (INIT)</div></div>
+              <div className="stat-card"><div className="stat-card-value">0.0015</div><div className="stat-card-label">Global Flow Rate (INIT/sec)</div></div>
+              <div className="stat-card"><div className="stat-card-value">3</div><div className="stat-card-label">Active Streams</div></div>
             </div>
 
-            <div className="streams-section">
+            <div className="stream-list">
               <div className="section-header">
                 <h2>Incoming streams</h2>
               </div>
-              <div className="streams-list">
+              <div className="stream-list">
                 {incomingStreams.map(stream => (
                   <div key={stream.id} className="stream-card">
-                    <div className="stream-header">
-                      <span className="stream-type" data-type={stream.streamType}>{stream.streamType}</span>
-                      <span className="stream-sender">{stream.senderUsername}</span>
+                    <div className="stream-card-mid">
+                      <span className="stream-from" data-type={stream.streamType}>{stream.streamType}</span>
+                      <span className="stream-addresses">{stream.senderUsername}</span>
                     </div>
-                    <div className="stream-amount">
-                      <span className="amount-value">{stream.claimable.toFixed(4)} INIT</span>
-                      <span className="amount-label">claimable</span>
+                    <div className="stream-card-right">
+                      <span className="stream-claimable-value">{stream.claimable.toFixed(4)} INIT</span>
+                      <span className="stream-claimable-label">claimable</span>
                     </div>
-                    <div className="stream-progress">
-                      <div className="progress-bar" style={{width: `${(stream.claimable / stream.totalDeposited) * 100}%`}} />
+                    <div className="stream-progress-bar">
+                      <div className="stream-progress-fill" style={{width: `${(stream.claimable / stream.totalDeposited) * 100}%`}} />
                     </div>
-                    <button className="btn-withdraw" onClick={() => handleWithdraw(stream.id)}>Withdraw</button>
+                    <button className="stream-action-btn withdraw" onClick={() => handleWithdraw(stream.id)}>Withdraw</button>
                   </div>
                 ))}
               </div>
             </div>
 
-            <div className="streams-section">
+            <div className="stream-list">
               <div className="section-header">
                 <h2>Outgoing streams</h2>
-                <button className="btn-new-stream" onClick={() => setShowCreate(true)}>+ New stream</button>
+                <button className="btn btn-primary" onClick={() => setShowCreate(true)}>+ New stream</button>
               </div>
-              <div className="streams-list">
+              <div className="stream-list">
                 {outgoingStreams.map(stream => (
                   <div key={stream.id} className="stream-card">
-                    <div className="stream-header">
-                      <span className="stream-type" data-type={stream.streamType}>{stream.streamType}</span>
-                      <span className="stream-recipient">{stream.recipientUsername}</span>
+                    <div className="stream-card-mid">
+                      <span className="stream-from" data-type={stream.streamType}>{stream.streamType}</span>
+                      <span className="stream-addresses">{stream.recipientUsername}</span>
                     </div>
-                    <div className="stream-amount">
-                      <span className="amount-value">{stream.claimable.toFixed(4)} INIT</span>
-                      <span className="amount-label">streamed so far</span>
+                    <div className="stream-card-right">
+                      <span className="stream-claimable-value">{stream.claimable.toFixed(4)} INIT</span>
+                      <span className="stream-claimable-label">streamed so far</span>
                     </div>
-                    <div className="stream-progress">
-                      <div className="progress-bar" style={{width: `${(stream.claimable / stream.totalDeposited) * 100}%`}} />
+                    <div className="stream-progress-bar">
+                      <div className="stream-progress-fill" style={{width: `${(stream.claimable / stream.totalDeposited) * 100}%`}} />
                     </div>
-                    <button className="btn-cancel" onClick={() => handleCancel(stream.id)}>Cancel</button>
+                    <button className="stream-action-btn cancel" onClick={() => handleCancel(stream.id)}>Cancel</button>
                   </div>
                 ))}
               </div>
