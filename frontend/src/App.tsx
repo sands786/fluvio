@@ -104,13 +104,13 @@ const EcosystemTicker = () => {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const res = await fetch('https://rest.testnet.initia.xyz/initia/move/v1/accounts/0xf229399249b5e72455cad9d5b2c17af99b7e3b4a/resources')
+        const res = await fetch('https://rest.testnet.initia.xyz/initia/move/v1/accounts/0xc809333033602fea438a4917dd1890d0f3eb8851/resources')
         const data = await res.json()
         const registry = data.resources?.find((r: any) => r.struct_tag.includes('stream_core::StreamRegistry'))
         if (registry) {
           const parsed = JSON.parse(registry.move_resource)
           const handle = parsed.data.streams.handle
-          const entriesRes = await fetch(`https://rest.testnet.initia.xyz/initia/move/v1/tables/${handle}/entries`)
+          const entriesRes = await fetch(`https://rest.testnet.initia.xyz/initia/move/v1/tables/${handle}/entries?limit=1000`)
           const entriesData = await entriesRes.json()
           const activeStreams = (entriesData.table_entries || []).filter((e: any) => {
             const s = JSON.parse(e.value)
