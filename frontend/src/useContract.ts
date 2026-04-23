@@ -92,7 +92,7 @@ export async function grantSessionKey(userAddress: string, sessionAddress: strin
   const accounts = await offlineSigner.getAccounts()
   const granter = accounts[0].address
 
-  const accRes = await fetch(REST_URL + '/cosmos/auth/v1beta1/accounts/' + granter)
+  const accRes = await fetch(REST_URL + '/cosmos/auth/v1beta1/accounts/' + granter, { cache: 'no-store' })
   const accData = await accRes.json()
   const baseAccount = accData.account?.base_account || accData.account
   const accountNumber = parseInt(baseAccount?.account_number || '0')

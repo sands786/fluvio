@@ -16,7 +16,7 @@ async function broadcastAmino(aminoMsg, chainId, restUrl) {
   const accounts = await offlineSigner.getAccounts()
   const sender = accounts[0].address
 
-  const accRes = await fetch(restUrl + '/cosmos/auth/v1beta1/accounts/' + sender)
+  const accRes = await fetch(restUrl + '/cosmos/auth/v1beta1/accounts/' + sender, { cache: 'no-store' })
   const accData = await accRes.json()
   const base = accData.account?.base_account || accData.account
   const accountNumber = parseInt(base?.account_number || '0')
