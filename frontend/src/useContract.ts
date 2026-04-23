@@ -1,5 +1,6 @@
 import { useCallback } from 'react'
 import { CHAIN_CONFIG } from './chain'
+import { Msg, MsgGrantAuthorization, AuthorizationGrant, GenericAuthorization, MsgExecAuthorized, bcs } from '@initia/initia.js'
 
 const REST_URL = 'https://rest.testnet.initia.xyz'
 const CHAIN_ID = 'initiation-2'
@@ -31,7 +32,7 @@ export async function broadcastMoveMsg(moduleName: string, functionName: string,
   const accountNumber = parseInt(baseAccount?.account_number || '0')
   const sequence = parseInt(baseAccount?.sequence || '0')
 
-  const { Msg } = await import('@initia/initia.js')
+  // Msg already imported
   const msg = Msg.fromAmino(buildMoveMsgAmino(actualSender, moduleName, functionName, args))
   const msgAny = msg.packAny()
 
@@ -169,7 +170,7 @@ export async function sessionBroadcastMoveMsg(
   const { TxRaw, TxBody } = await import('cosmjs-types/cosmos/tx/v1beta1/tx')
   const { SignMode } = await import('cosmjs-types/cosmos/tx/signing/v1beta1/signing')
   const { fromBase64 } = await import('@cosmjs/encoding')
-  const { Msg } = await import('@initia/initia.js')
+  // Msg already imported
 
   // Derive session wallet from mnemonic
   const sessionWallet = await DirectSecp256k1HdWallet.fromMnemonic(sessionMnemonic, { prefix: 'init' })
@@ -187,7 +188,7 @@ export async function sessionBroadcastMoveMsg(
   const innerMsgAny = innerMsg.packAny()
 
   // Build MsgExecAuthorized wrapping it
-  const { MsgExecAuthorized, Msg: Msg2 } = await import('@initia/initia.js')
+  // already imported
   const execMsg = new MsgExecAuthorized(sessionAddress, [innerMsg])
   const execMsgAny = execMsg.packAny()
 
@@ -233,7 +234,7 @@ export function useContract() {
     recipientUsername: string = 'recipient.init'
   ) => {
     if (!senderAddress) throw new Error('Wallet not connected')
-    const { bcs } = await import('@initia/initia.js')
+    // bcs already imported
     const recipientArg = Buffer.from(bcs.address().serialize(recipientAddress).toBytes()).toString('base64')
     const amountArg = Buffer.from(bcs.u64().serialize(BigInt(amountUinit)).toBytes()).toString('base64')
     const durationArg = Buffer.from(bcs.u64().serialize(BigInt(durationMs)).toBytes()).toString('base64')
@@ -252,7 +253,7 @@ export function useContract() {
     sessionMnemonic?: string,
     sessionAddress?: string
   ) => {
-    const { bcs } = await import('@initia/initia.js')
+    // bcs already imported
     const idArg = Buffer.from(bcs.u64().serialize(BigInt(streamId)).toBytes()).toString('base64')
     if (sessionMnemonic && sessionAddress) {
       return sessionBroadcastMoveMsg(sessionMnemonic, sessionAddress, senderAddress, 'stream_core', 'withdraw', [idArg])
@@ -261,7 +262,7 @@ export function useContract() {
   }, [])
 
   const cancelStream = useCallback(async (senderAddress: string, streamId: number) => {
-    const { bcs } = await import('@initia/initia.js')
+    // bcs already imported
     const idArg = Buffer.from(bcs.u64().serialize(BigInt(streamId)).toBytes()).toString('base64')
     return broadcastMoveMsg('stream_core', 'cancel_stream', [idArg])
   }, [])

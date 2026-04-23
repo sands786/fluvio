@@ -561,7 +561,7 @@ export default function App() {
               {[
                 ['01','Connect Your .init Wallet','Open Fluvio and connect with Keplr. Your streaming identity is human-readable — not a hex string.'],
                 ['02','Deposit INIT to Your Vault','Deposit INIT from your wallet. Coming from another chain? Use the Interwoven Bridge directly in the app.'],
-                ['03','Create a Stream','Enter the recipient's .init username, amount, and duration. Approve once with a session key.'],
+                ['03','Create a Stream','Enter the recipient .init username, amount, and duration. Approve once with a session key.'],
                 ['04','Watch Money Flow','Your dashboard shows every stream with a live counter ticking every 100ms.'],
               ].map(([n,t,d])=><div key={n} className="lp-step"><div className="lp-step-num">{n}</div><h3>{t}</h3><p>{d}</p></div>)}
             </div>
@@ -576,9 +576,9 @@ export default function App() {
               <h2 className="lp-benefits-h"><span className="lp-hbox">Fluvio enables</span> the top crypto-native organizations to manage recurring payments like airdrops, salaries and grants.</h2>
               <div>
                 {[
-                  ['⚡','Genuinely Real-time','Initia's 100ms block time means claimable_amount() returns a different value every tenth of a second.'],
-                  ['✍️','Sign Once, Stream Forever','You approve a stream once — one wallet signature — and it runs automatically for the entire duration.'],
-                  ['👤','.init Identity Layer','Streaming to alice.init feels human. Fluvio uses Initia's .init username system for all streams.'],
+                  ['⚡','Genuinely Real-time','Initia 100ms block time means claimable_amount() returns a different value every tenth of a second.'],
+                  ['✍️','Sign Once, Stream Forever','You approve a stream once, one wallet signature, and it runs automatically for the entire duration.'],
+                  ['👤','.init Identity Layer','Streaming to alice.init feels human. Fluvio uses Initia .init username system for all streams.'],
                   ['🌐','Interwoven Bridge Native','Deposit from Ethereum, Cosmos, or any Interwoven-connected chain directly in the Fluvio UI.'],
                   ['📡','Ecosystem Oracle','stream_registry.move is a public good. Any smart contract can call get_global_flow_rate().'],
                   ['💰','Appchain Economics','Near-zero gas costs. Micro-streams of $0.001/hr are economically viable on Fluvio.'],
