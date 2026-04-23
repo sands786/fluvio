@@ -1,25 +1,25 @@
 /* ─── Fonts ─────────────────────────────────────────────────────────────── */
-@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 
 /* ─── Variables ──────────────────────────────────────────────────────────── */
 :root {
-  --bg: #080b0f;
-  --bg-card: #0d1117;
-  --bg-card-hover: #111820;
-  --border: rgba(255,255,255,0.06);
+  --bg: #000000;
+  --bg-card: #0a0a0a;
+  --bg-card-hover: #111111;
+  --border: rgba(255,255,255,0.1);
   --border-hover: rgba(255,255,255,0.12);
   --text: #e8edf2;
   --text-muted: #5a6880;
   --text-dim: #2e3d52;
-  --accent: #00c896;
-  --accent-dim: rgba(0,200,150,0.12);
-  --accent-glow: rgba(0,200,150,0.25);
+  --accent: #10FF10;
+  --accent-dim: rgba(16,255,16,0.1);
+  --accent-glow: rgba(16,255,16,0.2);
   --red: #ff4d6a;
   --gold: #f59e0b;
   --purple: #7c6ff7;
   --blue: #3b82f6;
-  --font: 'Syne', sans-serif;
-  --mono: 'JetBrains Mono', monospace;
+  --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --mono: 'Courier New', monospace;
   --radius: 12px;
   --radius-sm: 8px;
 }
@@ -41,8 +41,8 @@ body {
   inset: 0;
   pointer-events: none;
   background-image:
-    linear-gradient(rgba(0,200,150,0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0,200,150,0.03) 1px, transparent 1px);
+    linear-gradient(rgba(16,255,16,0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(16,255,16,0.02) 1px, transparent 1px);
   background-size: 40px 40px;
   z-index: 0;
 }
