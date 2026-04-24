@@ -317,7 +317,7 @@ export default function App() {
   }
   const now = nowMs
   const incomingStreams = realIncoming
-    .filter(s => s.active && !s.cancelled)
+    .filter(s => s.active && !s.cancelled && !withdrawnIds.has(s.id))
     .map(s => ({ ...s, claimable: claimableAmount(s, now) }))
   const outgoingStreams = realOutgoing.map(s => ({
     ...s,
