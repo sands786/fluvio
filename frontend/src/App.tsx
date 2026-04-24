@@ -99,7 +99,7 @@ function claimableAmount(stream: Stream, nowMs: number): number {
 }
 
 // Ecosystem ticker component
-const EcosystemTicker = () => {
+const EcosystemTicker = ({ onUpdate }: { onUpdate: (t: any) => void }) => {
   const [ticker, setTicker] = useState({ blockTime: '100ms', flowRate: '0.0000', activeStreams: 0 })
   useEffect(() => {
     const fetchStats = async () => {
@@ -121,11 +121,9 @@ const EcosystemTicker = () => {
             const rate = parseInt(s.rate_per_ms || '0')
             return sum + (rate / 1000 / 1_000_000) * 1000 // per second in INIT
           }, 0)
-          setTicker({
-            blockTime: '100ms',
-            flowRate: totalFlowRate.toFixed(6),
-            activeStreams: activeStreams.length,
-          })
+          const t = { blockTime: '100ms', flowRate: totalFlowRate.toFixed(6), activeStreams: activeStreams.length }
+          setTicker(t)
+          onUpdate(t)
         }
       } catch {}
     }
@@ -271,6 +269,7 @@ type Tab = 'dashboard' | 'explore' | 'bridge'
 export default function App() {
   const [tab, setTab] = useState<Tab>('dashboard')
   const [showCreate, setShowCreate] = useState(false)
+  const [tickerData, setTickerData] = useState({ blockTime: '100ms', flowRate: '0.0000', activeStreams: 0 })
   const { wallet, connect, disconnect } = useWallet()
   const { incomingStreams: realIncoming, outgoingStreams: realOutgoing, allStreams, refetch } = useStreams(wallet.hexAddress)
   const { withdrawStream, cancelStream } = useContract()
@@ -294,8 +293,9 @@ export default function App() {
       await withdrawStream(wallet.address, id, sessionKey?.mnemonic, sessionAddress || undefined)
       setWithdrawnIds(prev => new Set([...prev, id]))
       showNotif(`Withdrawal successful — INIT sent to ${wallet.username}`)
-      await new Promise(r => setTimeout(r, 2000))
-      await refetch()
+      setTimeout(() => refetch(), 1000)
+      setTimeout(() => refetch(), 3000)
+      setTimeout(() => refetch(), 6000)
     } catch (e: any) {
       showNotif('Withdrawal failed: ' + e.message)
     }
@@ -360,7 +360,7 @@ export default function App() {
           )}
         </div>
       </header>
-      <EcosystemTicker />
+      <EcosystemTicker onUpdate={setTickerData} />
       {notification && <div className="notification">{notification}</div>}
 
       <main className="main">
@@ -368,8 +368,8 @@ export default function App() {
           <>
             <div className="stats-grid">
               <div className="stat-card"><div className="stat-value">{wallet.balance}</div><div className="stat-label">Your Balance (INIT)</div></div>
-              <div className="stat-card"><div className="stat-value">0.0015</div><div className="stat-label">Global Flow Rate (INIT/sec)</div></div>
-              <div className="stat-card"><div className="stat-value">3</div><div className="stat-label">Active Streams</div></div>
+              <div className="stat-card"><div className="stat-value">{tickerData.flowRate}</div><div className="stat-label">Global Flow Rate (INIT/sec)</div></div>
+              <div className="stat-card"><div className="stat-value">{tickerData.activeStreams}</div><div className="stat-label">Active Streams</div></div>
             </div>
 
             <div className="streams-section">
