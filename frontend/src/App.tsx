@@ -184,8 +184,9 @@ function CreateStreamForm({ onClose, senderAddress, onSuccess }: { onClose: () =
         }
         const result = await createStream(senderAddress, form.recipient, amountUinit, durationMs(), 0, form.note || '', senderAddress.slice(0,10) + '.init', form.recipient.slice(0,10) + '.init')
       console.log("Stream created:", result)
-        onSuccess?.()
       setStep('success')
+      setTimeout(() => onSuccess?.(), 2000)
+      setTimeout(() => onSuccess?.(), 5000)
     } catch (err: any) {
       alert('Failed: ' + err.message)
     } finally {
