@@ -279,6 +279,7 @@ export default function App() {
   const [cancelledIds, setCancelledIds] = useState<Set<number>>(new Set())
   const [cancellingIds, setCancellingIds] = useState<Set<number>>(new Set())
   const [nowMs, setNowMs] = useState(Date.now())
+  const [exploreFilter, setExploreFilter] = useState<'all'|'live'|'ended'>('live')
   useEffect(() => {
     const interval = setInterval(() => setNowMs(Date.now()), 100)
     return () => clearInterval(interval)
@@ -432,17 +433,31 @@ export default function App() {
         )}
         {tab === 'explore' && (
           <div className="explore-container">
-            <h2 style={{color:'var(--accent)',fontFamily:'var(--font-mono)',marginBottom:'0.5rem'}}>
-              Live Streams on Initia
-            </h2>
-            <p style={{color:'var(--text-secondary)',marginBottom:'2rem',fontSize:'0.9rem'}}>
-              {allStreams.length} stream{allStreams.length !== 1 ? 's' : ''} on-chain · Contract: init17g5...zjgsmd
-            </p>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-end',marginBottom:'2rem',flexWrap:'wrap',gap:'1rem'}}>
+              <div>
+                <h2 style={{color:'var(--accent)',fontFamily:'var(--font-mono)',marginBottom:'0.25rem',fontSize:'1.5rem',fontWeight:800}}>Live Streams</h2>
+                <p style={{color:'var(--text-muted)',fontSize:'0.85rem'}}>
+                  {allStreams.filter(s=>s.active).length} live · {allStreams.length} total · Contract: init17g5...zjgsmd
+                </p>
+              </div>
+              <div style={{display:'flex',gap:'0.5rem'}}>
+                {['all','live','ended'].map(f => (
+                  <button key={f} onClick={()=>setExploreFilter(f as any)} style={{
+                    padding:'0.4rem 1rem',borderRadius:'9999px',border:'1px solid',
+                    borderColor: exploreFilter===f ? 'var(--accent)' : 'var(--border)',
+                    background: exploreFilter===f ? 'rgba(16,255,16,0.1)' : 'transparent',
+                    color: exploreFilter===f ? 'var(--accent)' : 'var(--text-muted)',
+                    fontSize:'0.8rem',fontWeight:700,cursor:'pointer',fontFamily:'var(--font)',
+                    textTransform:'capitalize',transition:'all 0.2s'
+                  }}>{f}</button>
+                ))}
+              </div>
+            </div>
             <div style={{display:'flex',flexDirection:'column',gap:'1rem'}}>
-              {allStreams.length === 0 ? (
-                <p style={{color:'var(--text-secondary)'}}>No streams found on chain yet.</p>
+              {allStreams.filter(s => exploreFilter === 'all' ? true : exploreFilter === 'live' ? s.active : !s.active).length === 0 ? (
+                <p style={{color:'var(--text-muted)',textAlign:'center',padding:'3rem'}}>No streams found.</p>
               ) : (
-                allStreams.map(stream => (
+                allStreams.filter(s => exploreFilter === 'all' ? true : exploreFilter === 'live' ? s.active : !s.active).map(stream => (
                   <div key={stream.id} style={{
                     background:'rgba(0,255,136,0.03)',
                     border:'1px solid rgba(0,255,136,0.1)',
