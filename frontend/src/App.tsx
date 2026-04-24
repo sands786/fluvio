@@ -271,7 +271,7 @@ export default function App() {
   const [tab, setTab] = useState<Tab>('dashboard')
   const [showCreate, setShowCreate] = useState(false)
   const [tickerData, setTickerData] = useState({ blockTime: '100ms', flowRate: '0.0000', activeStreams: 0 })
-  const { wallet, connect, disconnect } = useWallet()
+  const { wallet, connect, disconnect, refreshBalance } = useWallet()
   const { incomingStreams: realIncoming, outgoingStreams: realOutgoing, allStreams, refetch } = useStreams(wallet.hexAddress)
   const { withdrawStream, cancelStream } = useContract()
   const { sessionKey, sessionAddress, hasGrant, isGranting, enableSessionKey } = useSessionKey(wallet.address, grantSessionKey)
@@ -298,6 +298,8 @@ export default function App() {
       await withdrawStream(wallet.address, id, sessionKey?.mnemonic, sessionAddress || undefined)
       setWithdrawnIds(prev => new Set([...prev, id]))
       showNotif(`✅ Withdrawal successful — INIT sent to your wallet!`)
+      setTimeout(() => refreshBalance(), 2000)
+      setTimeout(() => refetch(), 2000)
     } catch (e: any) {
       showNotif('Withdrawal failed: ' + e.message)
     } finally {
@@ -312,6 +314,7 @@ export default function App() {
       await cancelStream(wallet.address, id)
       setCancelledIds(prev => new Set([...prev, id]))
       showNotif('✅ Stream cancelled — unstreamed INIT returned to vault')
+      setTimeout(() => refreshBalance(), 2000)
     } catch (e: any) {
       showNotif('Cancel failed: ' + e.message)
     } finally {

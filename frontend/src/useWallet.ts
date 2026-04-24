@@ -59,5 +59,16 @@ export function useWallet() {
     setWallet({ connected: false, address: '', hexAddress: '', username: '', balance: '0.0000', rawBalance: 0 })
   }, [])
 
-  return { wallet, connect, disconnect }
+  const refreshBalance = useCallback(async () => {
+    if (!wallet.connected || !wallet.address) return
+    try {
+      const res = await fetch(`https://rest.testnet.initia.xyz/cosmos/bank/v1beta1/balances/${wallet.address}`, { cache: 'no-store' })
+      const data = await res.json()
+      const balance = data.balances?.find((b: any) => b.denom === 'uinit')?.amount || '0'
+      const initBalance = (parseInt(balance) / 1_000_000).toFixed(4)
+      setWallet(prev => ({ ...prev, balance: initBalance, rawBalance: parseInt(balance) }))
+    } catch {}
+  }, [wallet.connected, wallet.address])
+
+  return { wallet, connect, disconnect, refreshBalance }
 }
