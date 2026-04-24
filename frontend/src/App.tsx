@@ -306,14 +306,16 @@ export default function App() {
   }
 
   const handleCancel = async (id: number) => {
+    setCancellingIds(prev => new Set([...prev, id]))
     try {
       showNotif('Cancelling stream...')
       await cancelStream(wallet.address, id)
-      showNotif('Stream cancelled — unstreamed INIT returned to vault')
-      setTimeout(() => refetch(), 2000)
-        setTimeout(() => refetch(), 5000)
+      setCancelledIds(prev => new Set([...prev, id]))
+      showNotif('✅ Stream cancelled — unstreamed INIT returned to vault')
     } catch (e: any) {
       showNotif('Cancel failed: ' + e.message)
+    } finally {
+      setCancellingIds(prev => { const s = new Set(prev); s.delete(id); return s })
     }
   }
   const now = nowMs
