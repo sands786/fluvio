@@ -265,3 +265,28 @@ main { flex: 1; padding: 3rem 2.5rem; max-width: 1200px; margin: 0 auto; width: 
 .amount-label { font-size: 0.75rem; color: var(--text-muted); }
 .stream-progress { width: 100%; height: 4px; background: rgba(255,255,255,0.05); border-radius: 2px; overflow: hidden; margin-bottom: 0.75rem; }
 .progress-bar { height: 100%; background: linear-gradient(90deg, var(--accent), #00cc00); box-shadow: 0 0 10px rgba(16,255,16,0.3); transition: width 0.5s ease; }
+
+/* Modal form fixes */
+.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+.modal-body { display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1.5rem; }
+.modal-body input, .modal-body select, .modal-body textarea { width: 100%; padding: 0.75rem 1rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); color: #fff; font-size: 0.9rem; font-family: inherit; outline: none; }
+.modal-body input:focus, .modal-body select:focus { border-color: rgba(16,255,16,0.4); }
+.modal-body input::placeholder { color: #555; }
+.modal-body select option { background: #111; }
+.modal-body textarea { resize: vertical; min-height: 70px; }
+.duration-row { display: flex; gap: 0.5rem; }
+.duration-row input { width: 80px !important; flex-shrink: 0; }
+.duration-row select { flex: 1; }
+.modal-actions { display: flex; gap: 0.75rem; }
+.btn-primary { flex: 1; padding: 0.75rem; border-radius: 9999px; border: none; background: #10FF10; color: #000; font-size: 0.9rem; font-weight: 700; cursor: pointer; font-family: inherit; transition: all 0.2s; }
+.btn-primary:hover { background: #fff; }
+.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-secondary { flex: 1; padding: 0.75rem; border-radius: 9999px; border: 1px solid rgba(255,255,255,0.1); background: transparent; color: #888; font-size: 0.9rem; font-weight: 700; cursor: pointer; font-family: inherit; transition: all 0.2s; }
+.btn-secondary:hover { border-color: rgba(255,255,255,0.3); color: #fff; }
+.confirm-row { display: flex; justify-content: space-between; padding: 0.75rem 0; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.9rem; }
+.confirm-row span:first-child { color: #888; }
+.confirm-row.highlight span:last-child { color: #10FF10; font-weight: 700; }
+.success-modal { text-align: center; }
+.success-icon { font-size: 3rem; margin-bottom: 1rem; color: #10FF10; }
+.success-title { font-size: 1.5rem; font-weight: 800; margin-bottom: 0.5rem; }
+.success-sub { color: #888; font-size: 0.9rem; margin-bottom: 1.5rem; line-height: 1.5; }
