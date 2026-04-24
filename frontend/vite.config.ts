@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react'
 import { nodePolyfills } from 'vite-plugin-node-polyfills'
 
 export default defineConfig({
-  base: '/fluvio/',
+  base: process.env.GITHUB_PAGES === 'true' ? '/fluvio/' : '/',
   plugins: [
     react(),
     nodePolyfills({
