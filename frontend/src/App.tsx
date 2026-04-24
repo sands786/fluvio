@@ -294,9 +294,8 @@ export default function App() {
       await withdrawStream(wallet.address, id, sessionKey?.mnemonic, sessionAddress || undefined)
       setWithdrawnIds(prev => new Set([...prev, id]))
       showNotif(`Withdrawal successful — INIT sent to ${wallet.username}`)
-      refetch()
-      setTimeout(() => refetch(), 3000)
-      setTimeout(() => refetch(), 6000)
+      await new Promise(r => setTimeout(r, 2000))
+      await refetch()
     } catch (e: any) {
       showNotif('Withdrawal failed: ' + e.message)
     }
