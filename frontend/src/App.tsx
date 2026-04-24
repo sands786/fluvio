@@ -289,13 +289,14 @@ export default function App() {
   }
 
   const handleWithdraw = async (id: number) => {
-    console.log('WITHDRAWING STREAM ID:', id)
     try {
       showNotif('Sending withdrawal transaction...')
       await withdrawStream(wallet.address, id, sessionKey?.mnemonic, sessionAddress || undefined)
       setWithdrawnIds(prev => new Set([...prev, id]))
       showNotif(`Withdrawal successful — INIT sent to ${wallet.username}`)
+      refetch()
       setTimeout(() => refetch(), 3000)
+      setTimeout(() => refetch(), 6000)
     } catch (e: any) {
       showNotif('Withdrawal failed: ' + e.message)
     }
@@ -312,10 +313,9 @@ export default function App() {
     }
   }
   const now = nowMs
-  const incomingStreams = realIncoming.map(s => ({
-    ...s,
-    claimable: claimableAmount(s, now),
-  }))
+  const incomingStreams = realIncoming
+    .map(s => ({ ...s, claimable: claimableAmount(s, now) }))
+    .filter(s => s.claimable > 0 || s.active)
   const outgoingStreams = realOutgoing.map(s => ({
     ...s,
     claimable: claimableAmount(s, now),
