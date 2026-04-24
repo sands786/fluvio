@@ -275,6 +275,7 @@ export default function App() {
   const { withdrawStream, cancelStream } = useContract()
   const { sessionKey, sessionAddress, hasGrant, isGranting, enableSessionKey } = useSessionKey(wallet.address, grantSessionKey)
   const [withdrawnIds, setWithdrawnIds] = useState<Set<number>>(new Set())
+  const [withdrawingIds, setWithdrawingIds] = useState<Set<number>>(new Set())
   const [nowMs, setNowMs] = useState(Date.now())
   useEffect(() => {
     const interval = setInterval(() => setNowMs(Date.now()), 100)
@@ -288,17 +289,18 @@ export default function App() {
   }
 
   const handleWithdraw = async (id: number) => {
+    setWithdrawingIds(prev => new Set([...prev, id]))
     try {
       showNotif('Sending withdrawal transaction...')
       await withdrawStream(wallet.address, id, sessionKey?.mnemonic, sessionAddress || undefined)
       setWithdrawnIds(prev => new Set([...prev, id]))
-      showNotif(`Withdrawal successful — INIT sent to ${wallet.username}`)
-      setTimeout(() => refetch(), 1000)
+      showNotif(`✅ Withdrawal successful — INIT sent to your wallet!`)
       setTimeout(() => refetch(), 2000)
-        setTimeout(() => refetch(), 5000)
-      setTimeout(() => refetch(), 6000)
+      setTimeout(() => refetch(), 5000)
     } catch (e: any) {
       showNotif('Withdrawal failed: ' + e.message)
+    } finally {
+      setWithdrawingIds(prev => { const s = new Set(prev); s.delete(id); return s })
     }
   }
 
@@ -392,7 +394,7 @@ export default function App() {
                     <div className="stream-progress">
                       <div className="progress-bar" style={{width: `${(stream.claimable / stream.totalDeposited) * 100}%`}} />
                     </div>
-                    <button className="btn-withdraw" onClick={() => handleWithdraw(stream.id)}>Withdraw</button>
+                    <button className="btn-withdraw" onClick={() => handleWithdraw(stream.id)} disabled={withdrawingIds.has(stream.id)}>{withdrawingIds.has(stream.id) ? "Withdrawing..." : "Withdraw"}</button>
                   </div>
                 ))}
               </div>
