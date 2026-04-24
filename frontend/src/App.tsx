@@ -276,6 +276,8 @@ export default function App() {
   const { sessionKey, sessionAddress, hasGrant, isGranting, enableSessionKey } = useSessionKey(wallet.address, grantSessionKey)
   const [withdrawnIds, setWithdrawnIds] = useState<Set<number>>(new Set())
   const [withdrawingIds, setWithdrawingIds] = useState<Set<number>>(new Set())
+  const [cancelledIds, setCancelledIds] = useState<Set<number>>(new Set())
+  const [cancellingIds, setCancellingIds] = useState<Set<number>>(new Set())
   const [nowMs, setNowMs] = useState(Date.now())
   useEffect(() => {
     const interval = setInterval(() => setNowMs(Date.now()), 100)
@@ -319,10 +321,9 @@ export default function App() {
   const incomingStreams = realIncoming
     .filter(s => s.active && !s.cancelled && !withdrawnIds.has(s.id))
     .map(s => ({ ...s, claimable: claimableAmount(s, now) }))
-  const outgoingStreams = realOutgoing.map(s => ({
-    ...s,
-    claimable: claimableAmount(s, now),
-  }))
+  const outgoingStreams = realOutgoing
+    .filter(s => !cancelledIds.has(s.id))
+    .map(s => ({ ...s, claimable: claimableAmount(s, now) }))
 
   return (
     <div className="app">
@@ -419,7 +420,7 @@ export default function App() {
                     <div className="stream-progress">
                       <div className="progress-bar" style={{width: `${(stream.claimable / stream.totalDeposited) * 100}%`}} />
                     </div>
-                    <button className="btn-cancel" onClick={() => handleCancel(stream.id)}>Cancel</button>
+                    <button className="btn-cancel" onClick={() => handleCancel(stream.id)} disabled={cancellingIds.has(stream.id)}>{cancellingIds.has(stream.id) ? "Cancelling..." : "Cancel"}</button>
                   </div>
                 ))}
               </div>
