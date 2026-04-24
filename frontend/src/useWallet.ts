@@ -38,7 +38,6 @@ export function useWallet() {
     // Get hex address from Keplr key
     const key = await window.keplr.getKey('initiation-2')
     const hexAddress = '0x' + Buffer.from(key.address).toString('hex')
-    console.log('Wallet hex address:', hexAddress)
 
     const res = await fetch(`https://rest.testnet.initia.xyz/cosmos/bank/v1beta1/balances/${address}`)
     const data = await res.json()

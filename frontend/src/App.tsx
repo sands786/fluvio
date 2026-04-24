@@ -183,7 +183,6 @@ function CreateStreamForm({ onClose, senderAddress, onSuccess }: { onClose: () =
           await new Promise(r => setTimeout(r, 3000))
         }
         const result = await createStream(senderAddress, form.recipient, amountUinit, durationMs(), 0, form.note || '', senderAddress.slice(0,10) + '.init', form.recipient.slice(0,10) + '.init')
-      console.log("Stream created:", result)
       setStep('success')
       setTimeout(() => onSuccess?.(), 2000)
       setTimeout(() => onSuccess?.(), 5000)
