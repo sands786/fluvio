@@ -276,7 +276,6 @@ export default function App() {
   const { sessionKey, sessionAddress, hasGrant, isGranting, enableSessionKey } = useSessionKey(wallet.address, grantSessionKey)
   const [withdrawnIds, setWithdrawnIds] = useState<Set<number>>(new Set())
   const [withdrawingIds, setWithdrawingIds] = useState<Set<number>>(new Set())
-  const [withdrawingIds, setWithdrawingIds] = useState<Set<number>>(new Set())
   const [nowMs, setNowMs] = useState(Date.now())
   useEffect(() => {
     const interval = setInterval(() => setNowMs(Date.now()), 100)
