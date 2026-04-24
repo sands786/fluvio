@@ -289,6 +289,7 @@ export default function App() {
   }
 
   const handleWithdraw = async (id: number) => {
+    console.log('WITHDRAWING STREAM ID:', id)
     try {
       showNotif('Sending withdrawal transaction...')
       await withdrawStream(wallet.address, id, sessionKey?.mnemonic, sessionAddress || undefined)
