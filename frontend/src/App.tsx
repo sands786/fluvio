@@ -385,9 +385,18 @@ export default function App() {
             </div>
             <button className="hero-cta" onClick={connect}>Connect Wallet to Start</button>
             <div className="hero-features">
-              <div className="hero-feature"><span>💸</span><div><strong>Real-time payments</strong><p>Money flows every millisecond, not every month</p></div></div>
-              <div className="hero-feature"><span>🔑</span><div><strong>Session keys</strong><p>Sign once, stream automatically without popups</p></div></div>
-              <div className="hero-feature"><span>🌉</span><div><strong>Interwoven bridge</strong><p>Move INIT between L1 and Minitias via OPinit</p></div></div>
+              <div className="hero-feature">
+                <div className="hero-feature-icon">◈</div>
+                <div><strong>Real-time payments</strong><p>Money flows every millisecond, not every month. No batches, no delays.</p></div>
+              </div>
+              <div className="hero-feature">
+                <div className="hero-feature-icon">⌘</div>
+                <div><strong>Session keys</strong><p>Sign once to authorize a session key. Streams run automatically without wallet popups.</p></div>
+              </div>
+              <div className="hero-feature">
+                <div className="hero-feature-icon">⇄</div>
+                <div><strong>Interwoven bridge</strong><p>Move INIT between Initia L1 and Minitias via the native OPinit bridge.</p></div>
+              </div>
             </div>
           </div>
         )}
