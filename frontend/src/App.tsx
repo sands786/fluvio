@@ -294,7 +294,8 @@ export default function App() {
       setWithdrawnIds(prev => new Set([...prev, id]))
       showNotif(`Withdrawal successful — INIT sent to ${wallet.username}`)
       setTimeout(() => refetch(), 1000)
-      setTimeout(() => refetch(), 3000)
+      setTimeout(() => refetch(), 2000)
+        setTimeout(() => refetch(), 5000)
       setTimeout(() => refetch(), 6000)
     } catch (e: any) {
       showNotif('Withdrawal failed: ' + e.message)
@@ -306,14 +307,15 @@ export default function App() {
       showNotif('Cancelling stream...')
       await cancelStream(wallet.address, id)
       showNotif('Stream cancelled — unstreamed INIT returned to vault')
-      setTimeout(() => refetch(), 3000)
+      setTimeout(() => refetch(), 2000)
+        setTimeout(() => refetch(), 5000)
     } catch (e: any) {
       showNotif('Cancel failed: ' + e.message)
     }
   }
   const now = nowMs
   const incomingStreams = realIncoming
-    .filter(s => s.active || s.withdrawn < s.totalDeposited)
+    .filter(s => s.active && !s.cancelled)
     .map(s => ({ ...s, claimable: claimableAmount(s, now) }))
   const outgoingStreams = realOutgoing.map(s => ({
     ...s,
