@@ -373,7 +373,25 @@ export default function App() {
       {notification && <div className="notification">{notification}</div>}
 
       <main className="main">
-        {tab === 'dashboard' && (
+        {tab === 'dashboard' && !wallet.connected && (
+          <div className="hero">
+            <div className="hero-badge">⚡ Built on Initia</div>
+            <h1 className="hero-title">Stream money<br/>in real time</h1>
+            <p className="hero-sub">Fluvio lets you stream INIT token per second — like a salary, subscription, or grant. Fully on-chain, trustless, instant.</p>
+            <div className="hero-stats">
+              <div className="hero-stat"><div className="hero-stat-value">{tickerData.activeStreams}</div><div className="hero-stat-label">Active Streams</div></div>
+              <div className="hero-stat"><div className="hero-stat-value">{tickerData.flowRate}</div><div className="hero-stat-label">INIT/sec Flowing</div></div>
+              <div className="hero-stat"><div className="hero-stat-value">100ms</div><div className="hero-stat-label">Block Time</div></div>
+            </div>
+            <button className="hero-cta" onClick={connect}>Connect Wallet to Start</button>
+            <div className="hero-features">
+              <div className="hero-feature"><span>💸</span><div><strong>Real-time payments</strong><p>Money flows every millisecond, not every month</p></div></div>
+              <div className="hero-feature"><span>🔑</span><div><strong>Session keys</strong><p>Sign once, stream automatically without popups</p></div></div>
+              <div className="hero-feature"><span>🌉</span><div><strong>Interwoven bridge</strong><p>Move INIT between L1 and Minitias via OPinit</p></div></div>
+            </div>
+          </div>
+        )}
+        {tab === 'dashboard' && wallet.connected && (
           <>
             <div className="stats-grid">
               <div className="stat-card"><div className="stat-value">{wallet.balance}</div><div className="stat-label">Your Balance (INIT)</div></div>
