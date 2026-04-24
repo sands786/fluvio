@@ -284,6 +284,13 @@ export default function App() {
     const interval = setInterval(() => setNowMs(Date.now()), 100)
     return () => clearInterval(interval)
   }, [])
+  // Auto-refresh balance every 30 seconds
+  useEffect(() => {
+    if (!wallet.connected) return
+    const interval = setInterval(() => refreshBalance(), 30000)
+    return () => clearInterval(interval)
+  }, [wallet.connected, refreshBalance])
+
   const [notification, setNotification] = useState<string | null>(null)
 
   const showNotif = (msg: string) => {
@@ -417,16 +424,34 @@ export default function App() {
                   <div key={stream.id} className="stream-card">
                     <div className="stream-header">
                       <span className="stream-type" data-type={stream.streamType}>{stream.streamType}</span>
-                      <span className="stream-sender">{stream.senderUsername}</span>
+                      <span style={{display:'flex',alignItems:'center',gap:'0.5rem'}}>
+                        <span className="stream-live-dot" />
+                        <span style={{fontSize:'0.75rem',color:'var(--accent)',fontWeight:700}}>LIVE</span>
+                      </span>
+                    </div>
+                    <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-end',marginBottom:'0.75rem'}}>
+                      <div>
+                        <div style={{fontSize:'0.7rem',color:'var(--text-muted)',marginBottom:'0.2rem',textTransform:'uppercase',letterSpacing:'0.08em'}}>From</div>
+                        <div style={{fontSize:'0.9rem',fontFamily:'var(--mono)',color:'#fff'}}>{stream.senderUsername}</div>
+                      </div>
+                      <div style={{textAlign:'right'}}>
+                        <div style={{fontSize:'0.7rem',color:'var(--text-muted)',marginBottom:'0.2rem',textTransform:'uppercase',letterSpacing:'0.08em'}}>Rate</div>
+                        <div style={{fontSize:'0.9rem',fontFamily:'var(--mono)',color:'var(--accent)',fontWeight:700}}>{(stream.ratePerMs * 1000).toFixed(6)} INIT/sec</div>
+                      </div>
                     </div>
                     <div className="stream-amount">
-                      <span className="amount-value">{stream.claimable.toFixed(4)} INIT</span>
+                      <span className="amount-value">{stream.claimable.toFixed(6)} INIT</span>
                       <span className="amount-label">claimable</span>
                     </div>
                     <div className="stream-progress">
-                      <div className="progress-bar" style={{width: `${(stream.claimable / stream.totalDeposited) * 100}%`}} />
+                      <div className="progress-bar" style={{width: `${Math.min(100,(stream.claimable / stream.totalDeposited) * 100)}%`}} />
                     </div>
-                    <button className="btn-withdraw" onClick={() => handleWithdraw(stream.id)} disabled={withdrawingIds.has(stream.id)}>{withdrawingIds.has(stream.id) ? "Withdrawing..." : "Withdraw"}</button>
+                    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginTop:'0.75rem'}}>
+                      <span style={{fontSize:'0.75rem',color:'var(--text-muted)'}}>
+                        {stream.totalDeposited.toFixed(4)} INIT total · {nowMs < stream.endTimeMs ? `${Math.ceil((stream.endTimeMs - nowMs) / 60000)}min left` : 'Ended'}
+                      </span>
+                      <button className="btn-withdraw" onClick={() => handleWithdraw(stream.id)} disabled={withdrawingIds.has(stream.id)}>{withdrawingIds.has(stream.id) ? "Withdrawing..." : "Withdraw"}</button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -442,16 +467,34 @@ export default function App() {
                   <div key={stream.id} className="stream-card">
                     <div className="stream-header">
                       <span className="stream-type" data-type={stream.streamType}>{stream.streamType}</span>
-                      <span className="stream-recipient">{stream.recipientUsername}</span>
+                      <span style={{display:'flex',alignItems:'center',gap:'0.5rem'}}>
+                        <span className="stream-live-dot" style={{background:'var(--amber)'}} />
+                        <span style={{fontSize:'0.75rem',color:'var(--amber)',fontWeight:700}}>SENDING</span>
+                      </span>
+                    </div>
+                    <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-end',marginBottom:'0.75rem'}}>
+                      <div>
+                        <div style={{fontSize:'0.7rem',color:'var(--text-muted)',marginBottom:'0.2rem',textTransform:'uppercase',letterSpacing:'0.08em'}}>To</div>
+                        <div style={{fontSize:'0.9rem',fontFamily:'var(--mono)',color:'#fff'}}>{stream.recipientUsername}</div>
+                      </div>
+                      <div style={{textAlign:'right'}}>
+                        <div style={{fontSize:'0.7rem',color:'var(--text-muted)',marginBottom:'0.2rem',textTransform:'uppercase',letterSpacing:'0.08em'}}>Rate</div>
+                        <div style={{fontSize:'0.9rem',fontFamily:'var(--mono)',color:'var(--amber)',fontWeight:700}}>{(stream.ratePerMs * 1000).toFixed(6)} INIT/sec</div>
+                      </div>
                     </div>
                     <div className="stream-amount">
-                      <span className="amount-value">{stream.claimable.toFixed(4)} INIT</span>
+                      <span className="amount-value" style={{color:'var(--amber)'}}>{stream.claimable.toFixed(6)} INIT</span>
                       <span className="amount-label">streamed so far</span>
                     </div>
                     <div className="stream-progress">
-                      <div className="progress-bar" style={{width: `${(stream.claimable / stream.totalDeposited) * 100}%`}} />
+                      <div className="progress-bar" style={{width: `${Math.min(100,(stream.claimable / stream.totalDeposited) * 100)}%`, background:'linear-gradient(90deg,#d97706,#f59e0b)'}} />
                     </div>
-                    <button className="btn-cancel" onClick={() => handleCancel(stream.id)} disabled={cancellingIds.has(stream.id)}>{cancellingIds.has(stream.id) ? "Cancelling..." : "Cancel"}</button>
+                    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginTop:'0.75rem'}}>
+                      <span style={{fontSize:'0.75rem',color:'var(--text-muted)'}}>
+                        {stream.totalDeposited.toFixed(4)} INIT total · {nowMs < stream.endTimeMs ? `${Math.ceil((stream.endTimeMs - nowMs) / 60000)}min left` : 'Ended'}
+                      </span>
+                      <button className="btn-cancel" onClick={() => handleCancel(stream.id)} disabled={cancellingIds.has(stream.id)}>{cancellingIds.has(stream.id) ? "Cancelling..." : "Cancel"}</button>
+                    </div>
                   </div>
                 ))}
               </div>

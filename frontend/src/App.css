@@ -326,3 +326,5 @@ main { flex: 1; padding: 3rem 2.5rem; max-width: 1200px; margin: 0 auto; width: 
 @media (max-width: 768px) { .hero-features { grid-template-columns: 1fr; } .hero-stats { gap: 1.5rem; } }
 
 .hero-feature-icon { width: 36px; height: 36px; border-radius: 8px; background: rgba(16,255,16,0.08); border: 1px solid rgba(16,255,16,0.2); display: flex; align-items: center; justify-content: center; color: var(--accent); font-size: 1.1rem; flex-shrink: 0; }
+
+.stream-live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 8px var(--accent); animation: pulse 1.5s infinite; display: inline-block; }
