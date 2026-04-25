@@ -333,7 +333,7 @@ export default function App() {
     .map(s => ({ ...s, claimable: claimableAmount(s, now) }))
     .filter(s => s.active && !s.cancelled && !withdrawnIds.has(s.id) && now < s.endTimeMs)
   const outgoingStreams = realOutgoing
-    .filter(s => !cancelledIds.has(s.id) && s.active)
+    .filter(s => !cancelledIds.has(s.id) && s.active && now < s.endTimeMs)
     .map(s => ({ ...s, claimable: claimableAmount(s, now) }))
 
   return (
