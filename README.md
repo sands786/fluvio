@@ -1,166 +1,145 @@
 # Fluvio — Real-Time Money Streaming on Initia
 
-> *"Superfluid fakes streaming with JavaScript math. We actually stream."*
+> Stream INIT token by the millisecond. Salaries, subscriptions, grants — paid continuously, on-chain, trustless.
 
-**Money flows, not moves.**
-
-Fluvio is a real-time money streaming protocol built on a dedicated Initia appchain (`fluvio-1`). Instead of sending 1000 INIT in a single transaction, you stream 0.00116 INIT every second — continuously, for 10 days. The recipient's balance grows every 100ms, mirroring Initia's block time.
-
----
-
-## Why This Only Works on Initia
-
-| | Superfluid (Ethereum) | Fluvio (Initia) |
-|---|---|---|
-| Block time | 12 seconds | **100ms** |
-| "Streaming" reality | JS math pretending to be on-chain | **Real on-chain state every 100ms** |
-| Stream creation gas | $5–20 | **Fractions of a cent** |
-| Wallet friction | Popup for every interaction | **Sign once with Session Keys** |
-| Identity | 0x hex addresses | **`alice.init` usernames** |
-| Cross-chain deposits | Manual bridging | **Interwoven Bridge native** |
-| Buffer/liquidation system | Complex sentinel bots required | **Minimal — fast finality = fast detection** |
-
-**The core insight:** `timestamp::now_milliseconds()` on Initia advances every 100ms. Our `calculate_claimable()` function uses this to produce genuinely continuous financial flows. On Ethereum, the same math produces updates every 12 seconds — that's not streaming, that's batching with a nice UI.
+- Website: https://fluviio.vercel.app
+- Live App: https://sands786.github.io/fluvio/
+- Contract: init17g5nnyjfkhnjg4w2m82m9st6lxdhuw62zjgsmd
+- Deploy TX: https://scan.testnet.initia.xyz/initiation-2/txs/21D7D1326DA445B2AE9843FC2DE05B9F9BD457FF760EB7BD55E5DAA07106CE64
+- Network: Initia Testnet (initiation-2)
 
 ---
 
-## Initia Native Features Used
+## What is Fluvio?
 
-### 1. Auto-signing / Session UX
-Users grant a session key scoped to `create_stream` and `withdraw` actions with a configurable max spend limit. After that single signature, streams run automatically for their entire duration — days, weeks, or months — without a single wallet popup.
+Fluvio is the first native money streaming protocol built on Initia. Instead of sending a lump-sum payment, you open a stream and the recipient earns token continuously, every 100 milliseconds, directly on-chain.
 
-### 2. .init Usernames
-Streams use human-readable `.init` usernames as identities. `shahmeer.init` sends a salary stream to `alice.init`. No hex addresses in the UI ever.
+Unlike Superfluid on Ethereum which fakes streaming with JavaScript math, Fluvio updates real on-chain state every 100ms — because Initia actually produces a block every 100ms.
 
-### 3. Interwoven Bridge
-Users can deposit USDC from Ethereum, Arbitrum, or Solana. The Interwoven Bridge routes funds to `fluvio-1` automatically. Recipients can bridge earnings back to any chain. Cross-chain in one click.
+---
+
+## Why Initia?
+
+Initia's 100ms block time makes Fluvio uniquely powerful:
+
+- Real on-chain state — claimable balance is always accurate, every block
+- Interwoven ecosystem — stream INIT across any Minitia via OPinit bridge
+- Move VM — safe, auditable escrow logic with resource-based ownership
+- .init usernames — send streams to human-readable addresses
+
+---
+
+## Features
+
+### Real-Time Streaming
+Open a stream with any amount and duration. The recipient claimable balance increases every 100 milliseconds — visibly in the UI with an animated glowing progress bar.
+
+### Session Keys
+Enable a session key once with a single Keplr signature. After that, stream operations execute automatically without wallet popups.
+
+### Interwoven Bridge
+Move INIT between Initia L1 and Minitias via the native OPinit bridge — all from inside Fluvio.
+
+### Live Dashboard
+- Claimable balance ticking up every 100ms in real time
+- Animated glowing progress bar showing stream completion
+- INIT/sec rate on every stream card
+- Time remaining for each active stream
+- Auto-refreshing wallet balance after transactions
+- Global flow rate across all on-chain streams
 
 ---
 
 ## Smart Contracts
 
-### `stream_vault.move`
-Per-user escrow vault. Holds deposited INIT. Tracks free vs locked balance. Prevents double-spending across multiple active streams.
+Three Move contracts handle the full streaming lifecycle:
 
-### `stream_core.move`
-The streaming logic. Key function:
+| Contract | Role |
+|---|---|
+| stream_core | Stream creation, withdrawal, cancellation logic |
+| stream_vault | Escrow — holds INIT securely until claimed |
+| stream_registry | On-chain index and global stats oracle |
 
-```move
-fun calculate_claimable(stream: &Stream): u64 {
-    let now = timestamp::now_milliseconds();  // 100ms resolution
-    let elapsed = min(now, stream.end_time_ms) - stream.start_time_ms;
-    let total_earned = elapsed * stream.rate_per_ms;
-    let capped = min(total_earned, stream.total_deposited);
-    if (capped > stream.withdrawn_by_recipient) {
-        capped - stream.withdrawn_by_recipient
-    } else { 0 }
-}
-```
+Contract address: init17g5nnyjfkhnjg4w2m82m9st6lxdhuw62zjgsmd
+Deployed at block: 22041965
 
-No oracles. No off-chain computation. Pure deterministic math using Initia's millisecond timestamps.
+### Stream Lifecycle
 
-### `stream_registry.move`
-Public stats oracle. Any Initia app can query:
-- Total active streams
-- Global INIT flow rate per second
-- All-time value streamed
+create_stream(recipient, amount, duration, type, note)
+  - Locks INIT in stream_vault
+  - Registers stream in StreamRegistry
+  - Starts flowing immediately at rate = amount / duration
 
----
+withdraw(stream_id)
+  - Calculates claimable = elapsed_ms x rate_per_ms
+  - Transfers claimable INIT to recipient
+  - Updates withdrawn_by_recipient on-chain
 
-## Architecture
-
-```
-User (any chain)
-    │
-    ▼
-Interwoven Bridge ──► fluvio-1 appchain
-    │                       │
-    ▼                       ▼
-stream_vault.move    stream_core.move
-(escrow)             (rate calculations)
-    │                       │
-    └───────────────────────┤
-                            ▼
-                   stream_registry.move
-                   (public stats oracle)
-                            │
-                            ▼
-                   React Frontend
-                   (100ms counter UI)
-                   InterwovenKit session keys
-                   .init username resolution
-```
+cancel_stream(stream_id)
+  - Stops the stream immediately
+  - Returns unstreamed INIT to sender
+  - Recipient keeps what was already earned
 
 ---
 
-## Use Cases
+## Stream Types
 
-| Use Case | Who benefits | Rate example |
-|---|---|---|
-| **Payroll** | DAOs, remote teams | 5000 INIT/month = 0.0019 INIT/sec |
-| **Subscriptions** | Creators, SaaS | 100 INIT/month = 0.000038 INIT/sec |
-| **Rentals** | Server time, assets | Custom rate per hour |
-| **Grants** | Protocol contributors | Vested over 12 months |
-
----
-
-## Revenue Model
-
-The `fluvio-1` appchain captures **0.1% fee** on all streamed value. Every stream transaction generates appchain revenue — no external validators, no gas leaked to other chains.
-
-- 1,000 active streams × 100 INIT/month average = 100,000 INIT/month streamed
-- Platform fee: 100 INIT/month
-- Scales linearly. Zero additional infrastructure cost.
+| Type | Use Case |
+|---|---|
+| Salary | Continuous employee compensation |
+| Subscription | Pay-per-second SaaS or content access |
+| Grant | Milestone-free funding that vests in real time |
+| Rental | Time-based access payments |
+| Custom | Any payment that benefits from continuity |
 
 ---
 
-## Deployment
+## Tech Stack
 
-```bash
-# Deploy appchain
-initiad init fluvio-1 --chain-id fluvio-1
-
-# Deploy contracts
-initiad tx move publish ./contracts \
-  --from deployer \
-  --chain-id fluvio-1 \
-  --gas auto
-
-# Verify
-initiad query move view \
-  --address 0x1234 \
-  --module-name stream_core \
-  --function-name get_total_streams
-```
-
-**Chain ID:** `fluvio-1`  
-**Contract:** `0x1234` (replace after deployment)  
-**Frontend:** https://fluvio.vercel.app
+| Layer | Technology |
+|---|---|
+| Smart Contracts | Move (Initia MoveVM) |
+| Frontend | React + TypeScript + Vite |
+| Wallet | Keplr + CosmJS |
+| Chain | Initia Testnet (initiation-2) |
+| Bridge | OPinit (native Initia bridge) |
+| Deployment | GitHub Pages + GitHub Actions CI/CD |
 
 ---
 
-## Demo
+## Running Locally
 
-1. Connect with `.init` username via InterwovenKit
-2. Watch incoming salary stream: `initia-labs.init → shahmeer.init` — counter ticking every 100ms
-3. Create a new stream to `alice.init` — sign once with session key
-4. Watch both streams running simultaneously
-5. Withdraw claimable amount — no wallet popup (session key handles it)
-6. View global ecosystem stats in the Explore tab
+git clone https://github.com/sands786/fluvio
+cd fluvio/frontend
+npm install
+npm run dev
 
-**Demo line for judges:** *"Ethereum updates balances every 12 seconds. Watch this counter update every 100 milliseconds — because Initia produces blocks that fast. This isn't a UI trick. The on-chain state actually changes that frequently."*
+Open http://localhost:5173, connect Keplr wallet, and start streaming.
 
 ---
 
-## Team
+## What Makes This Different
 
-Built for INITIATE: The Initia Hackathon (Season 1)  
-Track: DeFi  
-GitHub: https://github.com/sands786/fluvio
+| Feature | Fluvio | Superfluid (ETH) | Sablier (ETH) |
+|---|---|---|---|
+| Real on-chain updates | YES every 100ms | NO JS math only | NO JS math only |
+| Native Move VM | YES | NO | NO |
+| Session keys | YES | NO | NO |
+| Interwoven bridge | YES | NO | NO |
+| Block time | 100ms | 12 seconds | 12 seconds |
 
 ---
 
-## License
+## Hackathon Submission
 
-MIT
-# Sat Apr 25 01:39:41 PKT 2026
+Built for the Initia hackathon. Fluvio demonstrates:
+
+1. Novel use of Initia 100ms block time — makes real streaming possible
+2. Full Move contract suite — three contracts working together
+3. Session key integration — Initia-native UX pattern
+4. Interwoven bridge — cross-Minitia INIT movement
+5. Production-quality UI — live ticking numbers, animated progress bars, real-time data
+
+---
+
+Fluvio — because money should flow, not move.
