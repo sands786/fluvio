@@ -333,7 +333,7 @@ export default function App() {
     .map(s => ({ ...s, claimable: claimableAmount(s, now) }))
     .filter(s => s.claimable > 0 && !s.cancelled && !withdrawnIds.has(s.id))
   const outgoingStreams = realOutgoing
-    .filter(s => !cancelledIds.has(s.id) && (s.active || s.withdrawn < s.totalDeposited))
+    .filter(s => !cancelledIds.has(s.id) && s.active)
     .map(s => ({ ...s, claimable: claimableAmount(s, now) }))
 
   return (
@@ -436,7 +436,7 @@ export default function App() {
                       </div>
                       <div style={{textAlign:'right'}}>
                         <div style={{fontSize:'0.7rem',color:'var(--text-muted)',marginBottom:'0.2rem',textTransform:'uppercase',letterSpacing:'0.08em'}}>Rate</div>
-                        <div style={{fontSize:'0.9rem',fontFamily:'var(--mono)',color:'var(--accent)',fontWeight:700}}>{(stream.ratePerMs * 1000).toFixed(6)} INIT/sec</div>
+                        <div style={{fontSize:'0.9rem',fontFamily:'var(--mono)',color:'var(--accent)',fontWeight:700}}>{(stream.ratePerMs * 1000).toFixed(4)} INIT/sec</div>
                       </div>
                     </div>
                     <div className="stream-amount">
@@ -479,7 +479,7 @@ export default function App() {
                       </div>
                       <div style={{textAlign:'right'}}>
                         <div style={{fontSize:'0.7rem',color:'var(--text-muted)',marginBottom:'0.2rem',textTransform:'uppercase',letterSpacing:'0.08em'}}>Rate</div>
-                        <div style={{fontSize:'0.9rem',fontFamily:'var(--mono)',color:'var(--amber)',fontWeight:700}}>{(stream.ratePerMs * 1000).toFixed(6)} INIT/sec</div>
+                        <div style={{fontSize:'0.9rem',fontFamily:'var(--mono)',color:'var(--amber)',fontWeight:700}}>{(stream.ratePerMs * 1000).toFixed(4)} INIT/sec</div>
                       </div>
                     </div>
                     <div className="stream-amount">
