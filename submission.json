@@ -1,0 +1,33 @@
+{
+  "project_name": "Fluvio",
+  "tagline": "Real-time money streaming protocol built natively on Initia",
+  "description": "Fluvio is the first native money streaming protocol on Initia. Stream INIT token by the millisecond — salaries, subscriptions, grants, rentals — paid continuously on-chain every 100ms. Unlike Superfluid on Ethereum which fakes streaming with JavaScript math, Fluvio updates real on-chain state every block.",
+  "website": "https://fluviio.vercel.app",
+  "app_url": "https://sands786.github.io/fluvio/",
+  "github": "https://github.com/sands786/fluvio",
+  "network": "initiation-2",
+  "contract_address": "init17g5nnyjfkhnjg4w2m82m9st6lxdhuw62zjgsmd",
+  "contract_address_hex": "0xf229399249b5e72455cad9d5b2c17af99b7e3b4a",
+  "deploy_tx": "21D7D1326DA445B2AE9843FC2DE05B9F9BD457FF760EB7BD55E5DAA07106CE64",
+  "deploy_block": "22041965",
+  "team": "Shahmeer",
+  "tech_stack": {
+    "contracts": "Move (Initia MoveVM)",
+    "frontend": "React + TypeScript + Vite",
+    "wallet": "Keplr + CosmJS",
+    "deployment": "GitHub Pages + GitHub Actions"
+  },
+  "features": [
+    "Real-time token streaming every 100ms",
+    "Session keys for gasless UX",
+    "Interwoven bridge via OPinit",
+    "Live dashboard with animated progress bars",
+    "Explore tab showing all on-chain streams",
+    "Withdraw and cancel functionality"
+  ],
+  "contracts": {
+    "stream_core": "Stream creation, withdrawal, cancellation",
+    "stream_vault": "Escrow holding INIT until claimed",
+    "stream_registry": "On-chain index and global stats"
+  }
+}
