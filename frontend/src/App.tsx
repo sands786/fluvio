@@ -94,8 +94,8 @@ function claimableAmount(stream: Stream, nowMs: number): number {
   // So actual rate in INIT/ms = chain_rate_per_ms / 1000 / 1_000_000
   // earned INIT = elapsedMs * chain_rate / 1000 / 1_000_000
   // Since ratePerMs = chain_rate / 1_000_000, earned = elapsedMs * ratePerMs / 1000
-  const earned = elapsedMs * stream.ratePerMs
-  return Math.min(stream.totalDeposited - stream.withdrawn, earned)
+  const earned = elapsedMs * stream.ratePerMs / 1000
+  return Math.max(0, Math.min(stream.totalDeposited - stream.withdrawn, earned))
 }
 
 // Ecosystem ticker component
@@ -436,7 +436,7 @@ export default function App() {
                       </div>
                       <div style={{textAlign:'right'}}>
                         <div style={{fontSize:'0.7rem',color:'var(--text-muted)',marginBottom:'0.2rem',textTransform:'uppercase',letterSpacing:'0.08em'}}>Rate</div>
-                        <div style={{fontSize:'0.9rem',fontFamily:'var(--mono)',color:'var(--accent)',fontWeight:700}}>{(stream.ratePerMs * 1000).toFixed(4)} INIT/sec</div>
+                        <div style={{fontSize:'0.9rem',fontFamily:'var(--mono)',color:'var(--accent)',fontWeight:700}}>{stream.ratePerMs.toFixed(6)} INIT/sec</div>
                       </div>
                     </div>
                     <div className="stream-amount">
@@ -479,7 +479,7 @@ export default function App() {
                       </div>
                       <div style={{textAlign:'right'}}>
                         <div style={{fontSize:'0.7rem',color:'var(--text-muted)',marginBottom:'0.2rem',textTransform:'uppercase',letterSpacing:'0.08em'}}>Rate</div>
-                        <div style={{fontSize:'0.9rem',fontFamily:'var(--mono)',color:'var(--amber)',fontWeight:700}}>{(stream.ratePerMs * 1000).toFixed(4)} INIT/sec</div>
+                        <div style={{fontSize:'0.9rem',fontFamily:'var(--mono)',color:'var(--amber)',fontWeight:700}}>{stream.ratePerMs.toFixed(6)} INIT/sec</div>
                       </div>
                     </div>
                     <div className="stream-amount">
